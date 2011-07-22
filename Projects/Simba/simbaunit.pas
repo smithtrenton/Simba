@@ -57,7 +57,7 @@ uses
 
   v_ideCodeParser, v_ideCodeInsight, CastaliaPasLexTypes, // Code completion units
   CastaliaSimplePasPar, v_AutoCompleteForm,  // Code completion units
-  PSDump,
+  PSDump, uPSDebugger,
 
   settings, updater;
 
@@ -1063,8 +1063,15 @@ begin
     end else
     if ScriptState <> ss_None then
     begin;
+      if (ScriptThread is TPSThread) then
+        if (TPSThread(ScriptThread).PSScript.Running) then
+        begin
+          TPSThread(ScriptThread).FResume := True;
+          Exit;
+        end;
+
       FormWritelnEx('The script hasn''t stopped yet, so we cannot start a new one.');
-      exit;
+      Exit;
     end;
     InitializeTMThread(scriptthread);
     ScriptThread.CompileOnly:= false;
@@ -1614,7 +1621,7 @@ var
   Se: TMMLSettingsSandbox;
   loadFontsOnScriptStart: boolean;
   Continue : boolean;
-
+  I: integer;
 begin
   if (CurrScript.ScriptFile <> '') and CurrScript.GetReadOnly() then
   begin
@@ -1636,7 +1643,7 @@ begin
   CurrentSyncInfo.SyncMethod:= @Self.SafeCallThread;
   try
     case Interpreter of
-      interp_PS : Thread := TPSThread.Create(true,@CurrentSyncInfo,PluginPath);
+      interp_PS: Thread := TPSThread.Create(true,@CurrentSyncInfo,PluginPath);
 
       // XXX: Rutis needs to be completely removed from Simba if it's not defined.
       // XXX: Not just print a message that it's not supported now.
@@ -1701,6 +1708,15 @@ begin
   Thread.OpenConnectionEvent:=@ThreadOpenConnectionEvent;
   Thread.WriteFileEvent:=@ThreadWriteFileEvent;
   Thread.OpenFileEvent:=@ThreadOpenFileEvent;
+
+  if (Thread is TPSThread) then
+    with TPSThread(Thread) do
+    begin
+      OnActiveLineChange := @CurrScript.OnActiveLine;
+      with PSScript do
+        for I := 0 to CurrScript.Breakpoints.Count - 1 do
+          SetBreakPoint(MainFileName, PInteger(CurrScript.Breakpoints.Items[I])^);
+    end;
 end;
 
 procedure TSimbaForm.HandleParameters;
@@ -2034,7 +2050,6 @@ begin
     Memo1.SelectAll
   else if LabeledEditSearch.Focused then
     LabeledEditSearch.SelectAll;
-
 end;
 
 procedure TSimbaForm.ActionStopExecute(Sender: TObject);
@@ -3524,7 +3539,6 @@ begin
     RefreshTab();
   end;
 end;
-
 
 { TMufasaTab }
 

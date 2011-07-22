@@ -29,7 +29,8 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, SynHighlighterPas, SynEdit, SynEditMarkupHighAll,
   mmlpsthread,ComCtrls, SynEditKeyCmds, LCLType,MufasaBase, Graphics, Controls, SynEditStrConst,
-  v_ideCodeInsight, v_ideCodeParser,  SynEditHighlighter,SynPluginSyncroEdit;
+  v_ideCodeInsight, v_ideCodeParser,  SynEditHighlighter,SynPluginSyncroEdit, SynGutterBase,
+  SynEditMarks;
 const
    ecCodeCompletion = ecUserFirst;
    ecCodeHints = ecUserFirst + 1;
@@ -46,7 +47,7 @@ type
 
   TScriptFrame = class(TFrame)
     SynEdit: TSynEdit;
-    SyncEdit : TSynPluginSyncroEdit;
+    SyncEdit: TSynPluginSyncroEdit;
     procedure SynEditChange(Sender: TObject);
     procedure SynEditClickLink(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -55,6 +56,8 @@ type
     procedure SynEditDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure SynEditDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
+    procedure SynEditGutterClick(Sender: TObject; X, Y, Line: integer;
+      mark: TSynEditMark);
     procedure SynEditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
       );
     procedure SynEditKeyPress(Sender: TObject; var Key: char);
@@ -80,6 +83,8 @@ type
     ScriptChanged : boolean;//We need this for that little * (edited star).
     ScriptThread : TMThread;//Just one thread for now..
     FScriptState : TScriptState;//Stores the ScriptState, if you want the Run/Pause/Start buttons to change accordingly, acces through Form1
+    ActiveLine: LongInt;
+    Breakpoints: TList;
     procedure undo;
     procedure redo;
     procedure HandleErrorData;
@@ -88,8 +93,9 @@ type
     procedure MakeActiveScriptFrame;
     procedure ScriptThreadTerminate(Sender: TObject);
     constructor Create(TheOwner: TComponent); override;
-
+    destructor Destroy();
     procedure ReloadScript;
+    procedure OnActiveLine(Line: LongInt);
     { public declarations }
   end;
 
@@ -280,6 +286,37 @@ begin
     SynEdit.CaretXY := SynEdit.PixelsToLogicalPos(point(x, y));
     if(not(SimbaForm.Active))then SimbaForm.BringToFront;
     if(SimbaForm.ActiveControl <> SynEdit)then SimbaForm.ActiveControl := SynEdit;
+  end;
+end;
+
+procedure TScriptFrame.SynEditGutterClick(Sender: TObject; X, Y, Line: integer; Mark: TSynEditMark);
+  function BPExists(L: Integer): boolean;
+  var
+    I: integer;
+  begin
+    Result := True;
+    for I := 0 to Breakpoints.Count - 1 do
+      if (PInteger(Breakpoints.Items[I])^ = L) then
+      begin
+        Breakpoints.Delete(I);
+        Exit;
+      end;
+    Result := False;
+  end;
+var
+  P: ^integer;
+begin
+  SynEdit.Marks.ClearLine(Line);
+  if (not BPExists(Line)) then
+  begin
+    Mark := TSynEditMark.Create(SynEdit);
+    Mark.Line := Line;
+    Mark.Visible := True;
+    Mark.ImageIndex := 19;
+    New(P);
+    P^ := Line;
+    Breakpoints.Add(P);
+    SynEdit.Marks.Add(Mark);
   end;
 end;
 
@@ -482,6 +519,13 @@ begin
     BG := $50a0ff;
     FG := 0;
   end;
+
+  if (ActiveLine = Line) then
+  begin
+    Special := True;
+    BG := clBlue;
+    FG := clWhite;
+  end;
 end;
 
 procedure TScriptFrame.SynEditStatusChange(Sender: TObject; Changes: TSynStatusChanges);
@@ -650,6 +694,18 @@ begin
   end;
   AddKey(SynEdit,ecCodeCompletion,VK_SPACE,[ssCtrl]);
   AddKey(SynEdit,ecCodeHints,VK_SPACE,[ssCtrl,ssShift]);
+
+  ActiveLine := 0;
+  Breakpoints := TList.Create;
+end;
+
+destructor TScriptFrame.Destroy();
+var
+  I: integer;
+begin
+  for I := Breakpoints.Count - 1 downto 0 do
+    Dispose(PInteger(Breakpoints.Items[I]));
+  Breakpoints.Free;
 end;
 
 function TScriptFrame.GetReadOnly: Boolean;
@@ -689,6 +745,17 @@ begin
   finally
     ExternScript.Free;
   end;
+end;
+
+procedure TScriptFrame.OnActiveLine(Line: LongInt);
+begin
+  ActiveLine := Line;
+  if ((ActiveLine < SynEdit.TopLine + 2) or (ActiveLine > SynEdit.TopLine + SynEdit.LinesInWindow - 2)) then
+    SynEdit.TopLine := ActiveLine - (SynEdit.LinesInWindow div 2);
+
+  SynEdit.CaretY := ActiveLine;
+  SynEdit.CaretX := 1;
+  SynEdit.Refresh;
 end;
 
 initialization
