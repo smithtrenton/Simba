@@ -30,9 +30,9 @@ unit mmlpsthread;
 interface
 
 uses
-  Classes, SysUtils, client, uPSComponent,uPSCompiler,
-  uPSRuntime, uPSPreProcessor,MufasaTypes,MufasaBase, web,
-  bitmaps, plugins, dynlibs,internets,scriptproperties,
+  Classes, SysUtils, client, uPSComponent, uPSComponentExt,
+  uPSCompiler, uPSRuntime, uPSPreProcessor,MufasaTypes,MufasaBase,
+  web, bitmaps, plugins, dynlibs,internets,scriptproperties,
   settings,settingssandbox, lcltype, dialogs
   {$IFDEF USE_RUTIS}
   ,Rutis_Engine,Rutis_Defs
@@ -191,7 +191,7 @@ type
         procedure OutputMessages;
         procedure HandleScriptTerminates;
       public
-        PSScript : TPSScript;
+        PSScript: TPSScriptExtension;
         constructor Create(CreateSuspended: Boolean; TheSyncInfo : PSyncInfo; plugin_dir: string);
         destructor Destroy; override;
         procedure SetScript(script: string); override;
@@ -534,15 +534,15 @@ begin
   FontPath:= FontP;
 end;
 
-function ThreadSafeCall(ProcName: string; var V: TVariantArray): Variant; extdecl;
+function ThreadSafeCall(Name: string; var V: TVariantArray): Variant; extdecl;
 begin
   if GetCurrentThreadId = MainThreadID then
   begin
     with TPSThread(currthread).PSScript do
-      Result := Exec.RunProcPVar(V,Exec.GetProc(Procname));
+      Result := Exec.RunProcPVar(V, Exec.GetProc(Name));
   end else
   begin
-    CurrThread.SyncInfo^.MethodName:= ProcName;
+    CurrThread.SyncInfo^.MethodName:= Name;
     CurrThread.SyncInfo^.V:= @V;
     CurrThread.SyncInfo^.OldThread := CurrThread;
     CurrThread.SyncInfo^.Res := @Result;
@@ -550,10 +550,10 @@ begin
   end;
 end;
 
-function CallProc(ProcName: string; var V: TVariantArray): Variant; extdecl;
+function CallProc(Name: string; var V: TVariantArray): Variant; extdecl;
 begin
   with TPSThread(currthread).PSScript do
-    Result := Exec.RunProcPVar(V,Exec.GetProc(Procname));
+    Result := Exec.RunProcPVar(V,Exec.GetProc(Name));
 end;
 
 {$I PSInc/Wrappers/other.inc}
@@ -611,17 +611,17 @@ var
   I : integer;
 begin
   inherited Create(CreateSuspended, TheSyncInfo, plugin_dir);
-  PSScript := TPSScript.Create(nil);
-  PSScript.UsePreProcessor:= True;
+  PSScript := TPSScriptExtension.Create(nil);
+  PSScript.UsePreProcessor := True;
   PSScript.CompilerOptions := PSScript.CompilerOptions + [icBooleanShortCircuit];
   PSScript.OnNeedFile := @RequireFile;
   PSScript.OnFileAlreadyIncluded := @FileAlreadyIncluded;
-  PSScript.OnProcessDirective:=@OnProcessDirective;
-  PSScript.OnProcessUnknowDirective:=@PSScriptProcessUnknownDirective;
-  PSScript.OnCompile:= @OnCompile;
-  PSScript.OnCompImport:= @OnCompImport;
-  PSScript.OnExecImport:= @OnExecImport;
-  PSScript.OnFindUnknownFile:= @PSScriptFindUnknownFile;
+  PSScript.OnProcessDirective := @OnProcessDirective;
+  PSScript.OnProcessUnknowDirective := @PSScriptProcessUnknownDirective;
+  PSScript.OnCompile := @OnCompile;
+  PSScript.OnCompImport := @OnCompImport;
+  PSScript.OnExecImport := @OnExecImport;
+  PSScript.OnFindUnknownFile := @PSScriptFindUnknownFile;
 
   with PSScript do
   begin
