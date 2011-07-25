@@ -35,7 +35,7 @@ uses
   MufasaBase, web, bitmaps, plugins, dynlibs,internets,scriptproperties,
   settings,settingssandbox, lcltype, dialogs
   {$IFDEF USE_RUTIS}
-  ,Rutis_Engine,Rutis_Defs
+  ,Rutis_Engine, Rutis_Defs
   {$ENDIF}
   ;
 
@@ -167,6 +167,7 @@ type
     { TPSThread }
 
     TOnActiveLineChange = procedure(Line: LongInt) of object;
+    TOnDebuggerUpdate = procedure(Thread: TMThread) of object;
 
     TPSThread = class(TMThread)
       public
@@ -183,7 +184,8 @@ type
       protected
         FActiveLine: LongInt;
         FOnActiveLineChange: TOnActiveLineChange;
-        PluginsToload : array of integer;
+        FOnDebuggerUpdate: TOnDebuggerUpdate;
+        PluginsToload: array of integer;
         procedure SetActiveLine(Line: LongInt);
         procedure ActiveLineChange;
         procedure LoadPlugin(plugidx: integer); override;
@@ -200,6 +202,7 @@ type
         procedure AfterExecute(Sender: TPSScript);
         procedure OutputMessages;
         procedure HandleScriptTerminates;
+        procedure DebuggerUpdate();
       public
         PSScript: TPSScriptExtension;
         FResume: Boolean;
@@ -210,6 +213,7 @@ type
         procedure Terminate; override;
         property ActiveLine: LongInt read FActiveLine write SetActiveLine;
         property OnActiveLineChange: TOnActiveLineChange write FOnActiveLineChange;
+        property OnDebuggerUpdate: TOnDebuggerUpdate write FOnDebuggerUpdate;
     end;
 
     TPrecompiler_Callback = function(name, args: PChar): boolean; stdcall;
@@ -783,17 +787,24 @@ end;
 procedure TPSThread.SetActiveLine(Line: LongInt);
 begin
   FActiveLine := Line;
-  Synchronize(nil, @ActiveLineChange);
+  TThread.Synchronize(nil, @ActiveLineChange);
 end;
 
 procedure TPSThread.Idle(Sender: TObject);
 begin
+  Sleep(250); //Without this it maxes people's cpus
+
   if (FResume) then
   begin
     FResume := False;
     PSScript.Resume;
     ActiveLine := 0;
   end;
+end;
+
+procedure TPSThread.DebuggerUpdate();
+begin
+  FOnDebuggerUpdate(Self);
 end;
 
 procedure TPSThread.LineInfo(Sender: TObject; const FileName: string; Pos, Row, Col: Cardinal);
@@ -805,11 +816,16 @@ end;
 procedure TPSThread.BreakPoint(Sender: TObject; const FileName: string; Pos, Row, Col: Cardinal);
 begin
   ActiveLine := Row;
+  if (FOnDebuggerUpdate <> nil) then
+    TThread.Synchronize(nil, @DebuggerUpdate);
 end;
 
 procedure TPSThread.AfterExecute(Sender: TPSScript);
 begin
   ActiveLine := 0;
+
+  if (FOnDebuggerUpdate <> nil) then
+    TThread.Synchronize(nil, @DebuggerUpdate);
 end;
 
 procedure SIRegister_Mufasa(cl: TPSPascalCompiler);

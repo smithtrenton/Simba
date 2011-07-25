@@ -34,7 +34,7 @@ interface
 uses
   {$IFDEF LINUX}cthreads, cmem,{$ENDIF}
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, Menus, ComCtrls, ExtCtrls, SynEdit, SynHighlighterPas,
+  StdCtrls, Menus, ComCtrls, ExtCtrls, SynEdit, SynHighlighterPas, TypInfo,
 
   MufasaTypes,
   mmlpsthread, // Code to use the interpreters in threads.
@@ -49,7 +49,7 @@ uses
 
   lcltype, ActnList,
   SynExportHTML, SynEditKeyCmds, SynEditHighlighter,
-  SynEditMarkupHighAll, LMessages, Buttons,
+  SynEditMarkupHighAll, LMessages, Buttons, PairSplitter,
   mmisc, stringutil,mufasatypesutil, mufasabase,
   about, framefunctionlist, ocr, updateform, Simbasettings, 
   {$IFDEF USE_EXTENSIONS}psextension, virtualextension, extensionmanager,{$ENDIF}
@@ -57,7 +57,9 @@ uses
 
   v_ideCodeParser, v_ideCodeInsight, CastaliaPasLexTypes, // Code completion units
   CastaliaSimplePasPar, v_AutoCompleteForm,  // Code completion units
-  PSDump, uPSDebugger,
+  PSDump,
+
+  uPSDebugger, uPSRuntime, uPSUtils, uPSDisassembly,
 
   settings, updater;
 
@@ -172,7 +174,17 @@ type
     MouseTimer: TTimer;
     NewsTimer: TTimer;
     FunctionListTimer: TTimer;
+    DebuggerPanel: TPanel;
     SCARHighlighter: TSynPasSyn;
+    SplitterDebugger: TSplitter;
+    DebuggerToolBar: TToolBar;
+    InfoTree: TTreeView;
+    Seperator: TToolButton;
+    StepIButton: TToolButton;
+    StepOButton: TToolButton;
+    ResumeButton: TToolButton;
+    PauseButton: TToolButton;
+    StopButton: TToolButton;
     TT_Console: TToolButton;
     TT_Cut: TToolButton;
     TT_Copy: TToolButton;
@@ -369,11 +381,13 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure PageControl1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure PauseButtonClick(Sender: TObject);
     procedure PickerPick(Sender: TObject; const Colour, colourx,
       coloury: integer);
     procedure PopupItemFindClick(Sender: TObject);
     procedure ProcessDebugStream(Sender: TObject);
     procedure RecentFileItemsClick(Sender: TObject);
+    procedure ResumeButtonClick(Sender: TObject);
     procedure ScriptPanelDockDrop(Sender: TObject; Source: TDragDockObject; X,
       Y: Integer);
     procedure ScriptPanelDockOver(Sender: TObject; Source: TDragDockObject; X,
@@ -382,6 +396,9 @@ type
     procedure SpeedButtonSearchClick(Sender: TObject);
     procedure SplitterFunctionListCanResize(Sender: TObject; var NewSize: Integer;
       var Accept: Boolean);
+    procedure StepIButtonClick(Sender: TObject);
+    procedure StepOButtonClick(Sender: TObject);
+    procedure StopButtonClick(Sender: TObject);
     procedure TB_ReloadPluginsClick(Sender: TObject);
     procedure ThreadOpenConnectionEvent(Sender: TObject; var url: string;
       var Continue: boolean);
@@ -442,6 +459,7 @@ type
     procedure SetSetting(const key,Value : string; save : boolean = false);
     function SettingExists(const key : string) : boolean;
     procedure FontUpdate;
+    procedure UpdateDebugger(Thread: TMThread);
   public
     DebugStream: String;
     SearchString : string;
@@ -457,6 +475,7 @@ type
     Selector: TMWindowSelector;
     OnScriptStart : TScriptStartEvent;
     FormCallBackData : TCallBackData;
+    DebuggerThread: TPSThread;
     {$ifdef mswindows}
     ConsoleVisible : boolean;
     procedure ShowConsole( ShowIt : boolean);
@@ -934,9 +953,156 @@ begin
     NewSize := ScriptPanel.Width div 2;
 end;
 
+procedure TSimbaForm.ResumeButtonClick(Sender: TObject);
+begin
+  TThread.Synchronize(DebuggerThread, @DebuggerThread.PSScript.Resume);
+  UpdateDebugger(DebuggerThread);
+end;
+
+procedure TSimbaForm.PauseButtonClick(Sender: TObject);
+begin
+  TThread.Synchronize(DebuggerThread, @DebuggerThread.PSScript.Pause);
+  UpdateDebugger(DebuggerThread);
+end;
+
+procedure TSimbaForm.StopButtonClick(Sender: TObject);
+begin
+  TThread.Synchronize(DebuggerThread, @DebuggerThread.PSScript.Stop);
+end;
+
+procedure TSimbaForm.StepIButtonClick(Sender: TObject);
+begin
+  TThread.Synchronize(DebuggerThread, @DebuggerThread.PSScript.StepInto);
+  UpdateDebugger(DebuggerThread);
+end;
+
+procedure TSimbaForm.StepOButtonClick(Sender: TObject);
+begin
+  TThread.Synchronize(DebuggerThread, @DebuggerThread.PSScript.StepOver);
+  UpdateDebugger(DebuggerThread);
+end;
+
+procedure TSimbaForm.UpdateDebugger(Thread: TMThread);
+  function BT2S(P: PIFTypeRec): string;
+  var
+    I: Longint;
+  begin
+    case p.BaseType of
+      btU8: Result := 'Byte';
+      btS8: Result := 'SmallInt';
+      btU16: Result := 'Word';
+      btS16: Result := 'ShortInt';
+      btU32: Result := 'Cardinal';
+      btS32: Result := 'LongInt';
+      btS64: Result := 'Int64';
+      btChar: Result := 'Char';
+      btWideChar: Result := 'WideChar';
+      btWideString: Result := 'WideString';
+      btSet: Result := 'set';
+      btSingle: Result := 'Single';
+      btDouble: Result := 'Double';
+      btExtended: Result := 'Extended';
+      btString: Result := 'string';
+      btRecord: begin
+          Result := 'record (';
+          for I := 0 to TPSTypeRec_Record(p).FieldTypes.Count - 1 do
+          begin
+            if (I <> 0) then
+              Result := Result + ', ';
+            Result := Result + BT2S(PIFTypeRec(TPSTypeRec_Record(p).FieldTypes[I]));
+          end;
+          Result := Result + ')';
+        end;
+      btArray: Result := 'array of ' + BT2S(TPSTypeRec_Array(p).ArrayType);
+      btResourcePointer: Result := 'ResourcePointer';
+      btPointer: Result := 'Pointer';
+      btVariant: Result := 'Variant';
+      btClass: Result := 'Class';
+      btProcPtr: Result := 'ProcPtr';
+      btStaticArray: Result := 'array[' + inttostR(TPSTypeRec_StaticArray(p).Size) + '] of ' + BT2S(TPSTypeRec_Array(p).ArrayType);
+    else
+      Result := 'Unknown '+inttostr(p.BaseType);
+    end;
+  end;
+var
+  I, J: LongInt;
+  Node, Temp: TTreeNode;
+begin
+  if (DebuggerThread = nil) then
+    DebuggerThread := TPSThread(Thread);
+
+  if (DebuggerThread <> TPSThread(Thread)) then
+    Exit;
+
+  with DebuggerThread.PSScript do
+  begin
+    if (not (Running)) then
+    begin
+      DebuggerThread := nil;
+      Exit;
+    end;
+
+    //ResumeButton.Enabled := (Exec.Status <> isRunning);
+    //PauseButton.Enabled := (Exec.Status <> isPaused);
+    //StepIButton.Enabled := (Exec.Status = isPaused);
+    //StepOButton.Enabled := (Exec.Status = isPaused);
+
+    with InfoTree do
+    begin
+      BeginUpdate;
+      with Items do
+      begin
+        Clear;
+        Node := Add(nil, 'General');
+        Node.DeleteChildren;
+        AddChild(Node, 'Current Position: ' + IntToStr(Exec.GetCurrentPosition));
+        AddChild(Node, 'Current Proc Numb: ' + IntToStr(Exec.GetCurrentProcNo));
+        Temp := AddChild(Node, 'Last Exception');
+        AddChild(Temp, 'Code: ' + GetEnumName(TypeInfo(TPSError), Ord(Exec.LastEx)));
+        AddChild(Temp, 'Position: ' + IntToStr(Exec.LastExPos));
+        AddChild(Temp, 'Proc Numb: ' + IntToStr(Exec.LastExProc));
+        AddChild(Temp, 'Param: ' + Exec.LastExParam);
+        AddChild(Node, 'Type Count: ' + IntToStr(Exec.GetTypeCount));
+        AddChild(Node, 'Variable Count: ' + IntToStr(Exec.GetVarCount));
+        AddChild(Node, 'Procedure Count: ' + IntToStr(Exec.GetProcCount));
+
+        if (Exec.GlobalVarNames.Count > 0) then
+        begin
+          Node := Add(Node, 'Global');
+          Temp := AddChild(Node, 'Variables');
+          with Exec.GlobalVarNames do
+            for I := 0 to Count - 1 do
+              AddChild(Temp, Items[I] + ': ' + BT2S(Exec.GetGlobalVar(I)^.FType) + ' = ' + GetVarContents(Items[I]));
+        end;
+
+        if ((Exec.CurrentProcParams.Count > 0) or (Exec.CurrentProcVars.Count > 0)) then
+        begin
+          Node := Add(Node, 'Local');
+          if (Exec.CurrentProcParams.Count > 0) then
+          begin
+            Temp := AddChild(Node, 'Parameters');
+            with Exec.CurrentProcParams do
+              for I := 0 to Count - 1 do
+                AddChild(Temp, Items[I] + ': ' + BT2S(Exec.GetGlobalVar(I)^.FType) + ' = ' + GetVarContents(Items[I]));
+          end;
+
+          if (Exec.CurrentProcVars.Count > 0) then
+          begin
+            Temp := AddChild(Node, 'Variables');
+            with Exec.CurrentProcVars do
+              for I := 0 to Count - 1 do
+                AddChild(Temp, Items[I] + ': ' + BT2S(Exec.GetGlobalVar(I)^.FType) + ' = ' + GetVarContents(Items[I]));
+          end;
+        end;
+      end;
+      EndUpdate;
+    end;
+  end;
+end;
+
 procedure TSimbaForm.TB_ReloadPluginsClick(Sender: TObject);
 begin
-//  PluginsGlob.FreePlugins;
+  //PluginsGlob.FreePlugins;
 end;
 
 procedure TSimbaForm.ThreadOpenConnectionEvent(Sender: TObject; var url: string;var Continue: boolean);
@@ -1713,9 +1879,13 @@ begin
     with TPSThread(Thread) do
     begin
       OnActiveLineChange := @CurrScript.OnActiveLine;
+      OnDebuggerUpdate := @UpdateDebugger;
       with PSScript do
-        for I := 0 to CurrScript.Breakpoints.Count - 1 do
-          SetBreakPoint(MainFileName, PInteger(CurrScript.Breakpoints.Items[I])^);
+      begin
+        ClearBreakPoints;
+        for I := 0 to CurrScript.SynEdit.Marks.Count - 1 do
+          SetBreakPoint(MainFileName, CurrScript.SynEdit.Marks.Items[I].Line);
+      end;
     end;
 end;
 
@@ -2525,6 +2695,8 @@ begin
 
   if SettingsForm.Oops then
     formWriteln('WARNING: No permissions to write to settings.xml!');
+
+  DebuggerThread := nil;
 end;
 
 procedure TSimbaForm.FormDestroy(Sender: TObject);

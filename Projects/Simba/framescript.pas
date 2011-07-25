@@ -84,7 +84,6 @@ type
     ScriptThread : TMThread;//Just one thread for now..
     FScriptState : TScriptState;//Stores the ScriptState, if you want the Run/Pause/Start buttons to change accordingly, acces through Form1
     ActiveLine: LongInt;
-    Breakpoints: TList;
     procedure undo;
     procedure redo;
     procedure HandleErrorData;
@@ -93,7 +92,6 @@ type
     procedure MakeActiveScriptFrame;
     procedure ScriptThreadTerminate(Sender: TObject);
     constructor Create(TheOwner: TComponent); override;
-    destructor Destroy();
     procedure ReloadScript;
     procedure OnActiveLine(Line: LongInt);
     { public declarations }
@@ -290,34 +288,16 @@ begin
 end;
 
 procedure TScriptFrame.SynEditGutterClick(Sender: TObject; X, Y, Line: integer; Mark: TSynEditMark);
-  function BPExists(L: Integer): boolean;
-  var
-    I: integer;
-  begin
-    Result := True;
-    for I := 0 to Breakpoints.Count - 1 do
-      if (PInteger(Breakpoints.Items[I])^ = L) then
-      begin
-        Breakpoints.Delete(I);
-        Exit;
-      end;
-    Result := False;
-  end;
-var
-  P: ^integer;
 begin
-  SynEdit.Marks.ClearLine(Line);
-  if (not BPExists(Line)) then
+  if (SynEdit.Marks.Line[Line] = nil) then
   begin
     Mark := TSynEditMark.Create(SynEdit);
     Mark.Line := Line;
+    Mark.ImageIndex := 32;
     Mark.Visible := True;
-    Mark.ImageIndex := 19;
-    New(P);
-    P^ := Line;
-    Breakpoints.Add(P);
     SynEdit.Marks.Add(Mark);
-  end;
+  end else
+    SynEdit.Marks.Line[Line].Clear(True);
 end;
 
 procedure TScriptFrame.SynEditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -696,16 +676,6 @@ begin
   AddKey(SynEdit,ecCodeHints,VK_SPACE,[ssCtrl,ssShift]);
 
   ActiveLine := 0;
-  Breakpoints := TList.Create;
-end;
-
-destructor TScriptFrame.Destroy();
-var
-  I: integer;
-begin
-  for I := Breakpoints.Count - 1 downto 0 do
-    Dispose(PInteger(Breakpoints.Items[I]));
-  Breakpoints.Free;
 end;
 
 function TScriptFrame.GetReadOnly: Boolean;
