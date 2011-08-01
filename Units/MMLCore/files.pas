@@ -70,7 +70,7 @@ type
 
 implementation
 uses
-  {$IFDEF MSWINDOWS}Windows,{$ENDIF} IniFiles,Client,FileUtil;
+  {$IFDEF MSWINDOWS}Windows,{$ENDIF} Client,FileUtil;
 
 { GetFiles in independant of the TMFiles class }
 

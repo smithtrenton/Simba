@@ -744,7 +744,7 @@ end;
 function TPSThread.FileAlreadyIncluded(Sender: TObject; OrgFileName, FileName: string): Boolean;
 var
   path: string;
-  i: integer;
+
 begin
   path := FindFile(filename,[includepath,ScriptPath,IncludeTrailingPathDelimiter(ExtractFileDir(OrgFileName))]);
   if path = '' then

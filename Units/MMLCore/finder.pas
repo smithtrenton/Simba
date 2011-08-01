@@ -30,7 +30,7 @@ interface
 
 {$define CheckAllBackground}//Undefine this to only check the first white point against the background (in masks).
 uses
-  colour_conv, Classes, SysUtils,bitmaps,MufasaBase,DTM,  MufasaTypes; // Types
+  colour_conv, Classes, SysUtils,bitmaps,DTM,  MufasaTypes; // Types
 
 { TMFinder Class }
 
@@ -104,7 +104,6 @@ uses
 //    colour_conv,// For RGBToColor, etc.
     Client, // For the Client Casts.
     math, //min/max
-    mmath,
     tpa, //TPABounds
     dtmutil
     ;
