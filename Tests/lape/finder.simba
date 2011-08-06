@@ -1,0 +1,133 @@
+program FinderTest;
+
+{
+    Use different CTS'es:
+        CTS 0, 1, 2. (And 3, later on)
+
+    SetToleranceSpeed, GetToleranceSpeed
+
+
+    Color
+
+    [ ] function CountColorTolerance(Color, xs, ys, xe, ye, Tolerance: Integer): Integer;
+    [ ] function CountColor(Color, xs, ys, xe, ye: Integer): Integer;
+    [ ] function FindColor(out x, y: Integer; Color, xs, ys, xe, ye: Integer): Boolean;
+    [ ] function FindColorSpiral(var x, y: Integer; color, xs, ys, xe, ye: Integer): Boolean;
+    [ ] function FindColorSpiralTolerance(var x, y: Integer; color, xs, ys, xe, ye,Tol: Integer): Boolean;
+    [ ] function FindColorTolerance(out x, y: Integer; Color, xs, ys, xe, ye, tol: Integer): Boolean;
+    [ ] function FindColorsTolerance(out Points: TPointArray; Color, xs, ys, xe, ye, Tol: Integer): Boolean;
+    [ ] function FindColorsSpiralTolerance(x, y: Integer; out Points: TPointArray; color, xs, ys, xe, ye: Integer; Tol: Integer) : boolean;
+    [ ] function FindColors(var TPA: TPointArray; Color, xs, ys, xe, ye: Integer): Boolean;
+    [ ] function FindColoredArea(var x, y: Integer; color, xs, ys, xe, ye: Integer; MinArea: Integer): Boolean;
+    [ ] function FindColoredAreaTolerance(var x, y: Integer; color, xs, ys, xe, ye: Integer; MinArea, tol: Integer): Boolean;
+
+    Mask
+
+    [ ] function FindMaskTolerance(const mask: TMask; out x, y: Integer; xs, ys, xe, ye: Integer; Tolerance, ContourTolerance: Integer): Boolean;
+
+    Bitmap
+
+    [ ] function FindBitmap(bitmap: TMufasaBitmap; out x, y: Integer): Boolean;
+    [ ] function FindBitmapIn(bitmap: TMufasaBitmap; out x, y: Integer;  xs, ys, xe, ye: Integer): Boolean;
+    [ ] function FindBitmapToleranceIn(bitmap: TMufasaBitmap; out x, y: Integer; xs, ys, xe, ye: Integer; tolerance: Integer): Boolean;
+    [ ] function FindBitmapSpiral(bitmap: TMufasaBitmap; var x, y: Integer; xs, ys, xe, ye: Integer): Boolean;
+    [ ] function FindBitmapSpiralTolerance(bitmap: TMufasaBitmap; var x, y: Integer; xs, ys, xe, ye,tolerance : integer): Boolean;
+    [ ] function FindBitmapsSpiralTolerance(bitmap: TMufasaBitmap; x, y: Integer; out Points : TPointArray; xs, ys, xe, ye,tolerance: Integer): Boolean;
+    [ ] function FindDeformedBitmapToleranceIn(bitmap: TMufasaBitmap; out x, y: Integer; xs, ys, xe, ye: Integer; tolerance: Integer; Range: Integer; AllowPartialAccuracy: Boolean; out accuracy: Extended): Boolean;
+
+    DTM
+
+    [ ] function FindDTM(DTM: TMDTM; out x, y: Integer; x1, y1, x2, y2: Integer): Boolean;
+    [ ] function FindDTMs(DTM: TMDTM; out Points: TPointArray; x1, y1, x2, y2 : integer; maxToFind: Integer = 0): Boolean;
+    [ ] function FindDTMRotated(DTM: TMDTM; out x, y: Integer; x1, y1, x2, y2: Integer; sAngle, eAngle, aStep: Extended; out aFound: Extended; Alternating : boolean): Boolean;
+    [ ] function FindDTMsRotated(DTM: TMDTM; out Points: TPointArray; x1, y1, x2, y2: Integer; sAngle, eAngle, aStep: Extended; out aFound: T2DExtendedArray;Alternating : boolean; maxToFind: Integer = 0): Boolean;
+}
+
+const
+    bench_times = 100;
+    out_file = 'test.out';
+    test_bmp = 'wall.bmp';
+
+    col = 255;
+
+var f: integer;
+    bmp: integer;
+    t: integer;
+    w,h: integer;
+
+type
+    PInteger = ^Integer;
+
+procedure write_str(s: string);
+begin
+  writefilestring(f, s);
+  writeln(s);
+end;
+
+procedure write_int(int: integer);
+begin
+  write_str(inttostr(Pinteger(@int)^));
+end;
+
+procedure write_tpa(tpa: tpointarray);
+var s: string;
+    i: integer;
+begin
+  for i := 0 to length(tpa) - 1 do
+    s:=s+tostring(tpa[i]);
+  write_str(s);
+end;
+
+procedure test_findcolor;
+var i: integer;
+var foo, bar: integer;
+begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+    findcolor(foo, foo, col, 0, 0, w - 1, h - 1);
+
+  findcolor(foo, bar, col, 0, 0, w - 1, h - 1);
+  write_int(foo);
+  write_int(bar);
+
+  write_str(tostring((gettickcount() - t) / bench_times));
+end;
+
+procedure test_findcolorspiral;
+begin
+end;
+
+procedure test_findcolorspiraltolerance;
+begin
+end;
+
+procedure test_findcolors;
+begin
+end;
+
+procedure test_findcolorstolerance;
+begin
+end;
+
+procedure test_findcolorsspiraltolerance;
+begin
+end;
+
+begin
+  f := rewritefile('/home/merlijn/Programs/simba/Tests/lape/' + out_file, false);
+  bmp := loadbitmap(test_bmp);
+  settargetbitmap(bmp);
+  getclientdimensions(w,h);
+
+  test_findcolor();
+  test_findcolorspiral();
+  test_findcolorspiraltolerance();
+
+  test_findcolors();
+  test_findcolorstolerance();
+  test_findcolorsspiraltolerance();
+
+  setdesktopasclient();
+  closefile(f);
+  freebitmap(bmp);
+end.
