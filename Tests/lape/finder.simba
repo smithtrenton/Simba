@@ -117,7 +117,7 @@ begin
   f := rewritefile('/home/merlijn/Programs/simba/Tests/lape/' + out_file, false);
   bmp := loadbitmap(test_bmp);
   settargetbitmap(bmp);
-  getclientdimensions(w,h);
+  getbitmapsize(bmp,w,h);
 
   test_findcolor();
   test_findcolorspiral();
