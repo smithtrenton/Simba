@@ -55,12 +55,19 @@ var f: integer;
     t: integer;
     w,h: integer;
 
+const LE =
+{$IFDEF LINUX}
+#10;
+{$ELSE}
+#10#13;
+{$ENDIF}
+
 type
     PInteger = ^Integer;
 
 procedure write_str(s: string);
 begin
-  writefilestring(f, s);
+  writefilestring(f, s + LE);
   writeln(s);
 end;
 
