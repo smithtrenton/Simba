@@ -77,19 +77,11 @@ begin
   write_str(inttostr(Pinteger(@int)^));
 end;
 
-procedure write_tpa(tpa: tpointarray);
-var s: string;
-    i: integer;
-begin
-  for i := 0 to length(tpa) - 1 do
-    s:=s+tostring(tpa[i]);
-  write_str(s);
-end;
-
 procedure test_findcolor;
 var i: integer;
 var foo, bar: integer;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
     findcolor(foo, foo, col, 0, 0, w - 1, h - 1);
@@ -108,6 +100,7 @@ procedure test_findcolorspiral;
 var i: integer;
 var foo, bar: integer;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -132,6 +125,7 @@ procedure test_findcolorspiraltolerance;
 var i: integer;
 var foo, bar: integer;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -156,6 +150,7 @@ procedure test_findcolors;
 var i: integer;
 tpa: array of tpoint;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -176,6 +171,7 @@ procedure test_findcolorstolerance;
 var i: integer;
 tpa: array of tpoint;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -198,6 +194,7 @@ var i: integer;
 foo,bar: integer;
 tpa: array of tpoint;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -221,6 +218,7 @@ procedure test_countcolor;
 var i: integer;
 count: integer;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -238,6 +236,7 @@ procedure test_countcolortolerance;
 var i: integer;
 count: integer;
 begin
+  write_str('------------------------------------------------');
   t := gettickcount();
   for i := 0 to bench_times do
   begin
@@ -251,22 +250,30 @@ begin
 
 end;
 
+
+var cts: integer;
+
 begin
   f := rewritefile('/home/merlijn/Programs/simba/Tests/lape/' + out_file, false);
   bmp := loadbitmap(test_bmp);
   settargetbitmap(bmp);
   getbitmapsize(bmp,w,h);
 
-  test_findcolor();
-  test_findcolorspiral();
-  test_findcolorspiraltolerance();
+  for cts := 0 to 2 do
+  begin
+    SetColorToleranceSpeed(cts);
 
-  test_findcolors();
-  test_findcolorstolerance();
-  test_findcolorsspiraltolerance();
+    test_findcolor();
+    test_findcolorspiral();
+    test_findcolorspiraltolerance();
 
-  test_countcolor();
-  test_countcolortolerance();
+    test_findcolors();
+    test_findcolorstolerance();
+    test_findcolorsspiraltolerance();
+
+    test_countcolor();
+    test_countcolortolerance();
+  end;
 
   setdesktopasclient();
   closefile(f);
