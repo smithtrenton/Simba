@@ -9,15 +9,15 @@ program FinderTest;
 
     Color
 
-    [ ] function CountColorTolerance(Color, xs, ys, xe, ye, Tolerance: Integer): Integer;
-    [ ] function CountColor(Color, xs, ys, xe, ye: Integer): Integer;
-    [ ] function FindColor(out x, y: Integer; Color, xs, ys, xe, ye: Integer): Boolean;
-    [ ] function FindColorSpiral(var x, y: Integer; color, xs, ys, xe, ye: Integer): Boolean;
-    [ ] function FindColorSpiralTolerance(var x, y: Integer; color, xs, ys, xe, ye,Tol: Integer): Boolean;
-    [ ] function FindColorTolerance(out x, y: Integer; Color, xs, ys, xe, ye, tol: Integer): Boolean;
-    [ ] function FindColorsTolerance(out Points: TPointArray; Color, xs, ys, xe, ye, Tol: Integer): Boolean;
-    [ ] function FindColorsSpiralTolerance(x, y: Integer; out Points: TPointArray; color, xs, ys, xe, ye: Integer; Tol: Integer) : boolean;
-    [ ] function FindColors(var TPA: TPointArray; Color, xs, ys, xe, ye: Integer): Boolean;
+    [X] function CountColor(Color, xs, ys, xe, ye: Integer): Integer;
+    [X] function CountColorTolerance(Color, xs, ys, xe, ye, Tolerance: Integer): Integer;
+    [X] function FindColor(out x, y: Integer; Color, xs, ys, xe, ye: Integer): Boolean;
+    [X] function FindColorSpiral(var x, y: Integer; color, xs, ys, xe, ye: Integer): Boolean;
+    [X] function FindColorSpiralTolerance(var x, y: Integer; color, xs, ys, xe, ye,Tol: Integer): Boolean;
+    [X] function FindColorTolerance(out x, y: Integer; Color, xs, ys, xe, ye, tol: Integer): Boolean;
+    [X] function FindColorsTolerance(out Points: TPointArray; Color, xs, ys, xe, ye, Tol: Integer): Boolean;
+    [X] function FindColorsSpiralTolerance(x, y: Integer; out Points: TPointArray; color, xs, ys, xe, ye: Integer; Tol: Integer) : boolean;
+    [X] function FindColors(var TPA: TPointArray; Color, xs, ys, xe, ye: Integer): Boolean;
     [ ] function FindColoredArea(var x, y: Integer; color, xs, ys, xe, ye: Integer; MinArea: Integer): Boolean;
     [ ] function FindColoredAreaTolerance(var x, y: Integer; color, xs, ys, xe, ye: Integer; MinArea, tol: Integer): Boolean;
 
@@ -44,11 +44,12 @@ program FinderTest;
 }
 
 const
-    bench_times = 100;
+    bench_times = 10;
     out_file = 'test.out';
     test_bmp = 'wall.bmp';
 
-    col = 255;
+    col = 7698820;
+    tol = 50;
 
 var f: integer;
     bmp: integer;
@@ -93,31 +94,161 @@ begin
   for i := 0 to bench_times do
     findcolor(foo, foo, col, 0, 0, w - 1, h - 1);
 
-  findcolor(foo, bar, col, 0, 0, w - 1, h - 1);
-  write_int(foo);
-  write_int(bar);
+  if findcolor(foo, bar, col, 0, 0, w - 1, h - 1) then
+  begin
+    write_str('found');
+    write_int(foo);
+    write_int(bar);
+  end;
 
   write_str(tostring((gettickcount() - t) / bench_times));
 end;
 
 procedure test_findcolorspiral;
+var i: integer;
+var foo, bar: integer;
 begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    foo := 42;
+    bar := 500;
+    findcolorspiral(foo, bar, col, 0, 0, w - 1, h - 1);
+  end;
+
+  foo := 42;
+  bar := 500;
+  if findcolorspiral(foo, bar, col, 0, 0, w - 1, h - 1) then
+  begin
+    write_str('found');
+    write_int(foo);
+    write_int(bar);
+  end;
+
+  write_str(tostring((gettickcount() - t) / bench_times));
 end;
 
 procedure test_findcolorspiraltolerance;
+var i: integer;
+var foo, bar: integer;
 begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    foo := 42;
+    bar := 500;
+    findcolorspiraltolerance(foo, bar, col, 0, 0, w - 1, h - 1, tol);
+  end;
+
+  foo := 42;
+  bar := 500;
+  if findcolorspiraltolerance(foo, bar, col, 0, 0, w - 1, h - 1, tol) then
+  begin
+    write_str('found');
+    write_int(foo);
+    write_int(bar);
+  end;
+
+  write_str(tostring((gettickcount() - t) / bench_times));
 end;
 
 procedure test_findcolors;
+var i: integer;
+tpa: array of tpoint;
 begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    findcolors(tpa, col, 0, 0, w - 1, h - 1);
+  end;
+
+  if findcolors(tpa, col, 0, 0, w - 1, h - 1) then
+  begin
+    write_str('found');
+    write_int(length(tpa));
+    write_str(tostring(tpa));
+  end;
+
+  write_str(tostring((gettickcount() - t) / bench_times));
 end;
 
 procedure test_findcolorstolerance;
+var i: integer;
+tpa: array of tpoint;
 begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    findcolorstolerance(tpa, col, 0, 0, w - 1, h - 1, tol);
+  end;
+
+  if findcolorstolerance(tpa, col, 0, 0, w - 1, h - 1, tol) then
+  begin
+    write_str('found');
+    write_int(length(tpa));
+    setlength(tpa, 10); // only print first 10
+    write_str(tostring(tpa));
+  end;
+
+  write_str(tostring((gettickcount() - t) / bench_times));
 end;
 
 procedure test_findcolorsspiraltolerance;
+var i: integer;
+foo,bar: integer;
+tpa: array of tpoint;
 begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    foo := 42; bar := 500;
+    findcolorsspiraltolerance(foo, bar, tpa, col, 0, 0, w - 1, h - 1, tol);
+  end;
+
+  foo := 42; bar := 500;
+  if findcolorsspiraltolerance(foo, bar, tpa, col, 0, 0, w - 1, h - 1, tol) then
+  begin
+    write_str('found');
+    write_int(length(tpa));
+    setlength(tpa, 10); // only print first 10
+    write_str(tostring(tpa));
+  end;
+
+  write_str(tostring((gettickcount() - t) / bench_times));
+end;
+
+procedure test_countcolor;
+var i: integer;
+count: integer;
+begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    countcolor(col, 0, 0, w-1,h-1);
+  end;
+
+  count := countcolor(col,0,0,w-1,h-1);
+  write_int(count);
+
+  write_str(tostring((gettickcount() - t) / bench_times));
+
+end;
+
+procedure test_countcolortolerance;
+var i: integer;
+count: integer;
+begin
+  t := gettickcount();
+  for i := 0 to bench_times do
+  begin
+    countcolortolerance(col, 0, 0, w-1,h-1,tol);
+  end;
+
+  count := countcolortolerance(col,0,0,w-1,h-1,tol);
+  write_int(count);
+
+  write_str(tostring((gettickcount() - t) / bench_times));
+
 end;
 
 begin
@@ -133,6 +264,9 @@ begin
   test_findcolors();
   test_findcolorstolerance();
   test_findcolorsspiraltolerance();
+
+  test_countcolor();
+  test_countcolortolerance();
 
   setdesktopasclient();
   closefile(f);
