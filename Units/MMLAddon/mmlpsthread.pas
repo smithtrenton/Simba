@@ -30,12 +30,12 @@ unit mmlpsthread;
 interface
 
 uses
-  Classes, SysUtils, client, uPSComponent,uPSCompiler,
-  uPSRuntime, uPSPreProcessor,MufasaTypes,MufasaBase, web,
-  bitmaps, plugins, dynlibs,internets,scriptproperties,
+  Classes, SysUtils, client, uPSComponent, uPSComponentExt,
+  uPSCompiler, uPSRuntime, uPSPreProcessor, uPSDebugger, MufasaTypes,
+  MufasaBase, web, bitmaps, plugins, dynlibs,internets,scriptproperties,
   settings,settingssandbox, lcltype, dialogs
   {$IFDEF USE_RUTIS}
-  ,Rutis_Engine,Rutis_Defs
+  ,Rutis_Engine, Rutis_Defs
   {$ENDIF}
   ;
 
@@ -166,6 +166,9 @@ type
 
     { TPSThread }
 
+    TOnActiveLineChange = procedure(Line: LongInt) of object;
+    TOnDebuggerUpdate = procedure(Thread: TMThread) of object;
+
     TPSThread = class(TMThread)
       public
         procedure OnProcessDirective(Sender: TPSPreProcessor;
@@ -179,7 +182,12 @@ type
           const DirectiveName, DirectiveParam: string; var Continue: Boolean;
           Filename: string);
       protected
-        PluginsToload : array of integer;
+        FActiveLine: LongInt;
+        FOnActiveLineChange: TOnActiveLineChange;
+        FOnDebuggerUpdate: TOnDebuggerUpdate;
+        PluginsToload: array of integer;
+        procedure SetActiveLine(Line: LongInt);
+        procedure ActiveLineChange;
         procedure LoadPlugin(plugidx: integer); override;
         procedure OnCompile(Sender: TPSScript);
         function RequireFile(Sender: TObject; const OriginFileName: String;
@@ -189,15 +197,24 @@ type
 
         procedure OnCompImport(Sender: TObject; x: TPSPascalCompiler);
         procedure OnExecImport(Sender: TObject; se: TPSExec; x: TPSRuntimeClassImporter);
+        procedure Idle(Sender: TObject);
+        procedure LineInfo(Sender: TObject; const FileName: string; Pos, Row, Col: Cardinal);
+        procedure BreakPoint(Sender: TObject; const FileName: string; Pos, Row, Col: Cardinal);
+        procedure AfterExecute(Sender: TPSScript);
         procedure OutputMessages;
         procedure HandleScriptTerminates;
+        procedure DebuggerUpdate();
       public
-        PSScript : TPSScript;
+        PSScript: TPSScriptExtension;
+        FResume: Boolean;
         constructor Create(CreateSuspended: Boolean; TheSyncInfo : PSyncInfo; plugin_dir: string);
         destructor Destroy; override;
         procedure SetScript(script: string); override;
         procedure Execute; override;
         procedure Terminate; override;
+        property ActiveLine: LongInt read FActiveLine write SetActiveLine;
+        property OnActiveLineChange: TOnActiveLineChange write FOnActiveLineChange;
+        property OnDebuggerUpdate: TOnDebuggerUpdate write FOnDebuggerUpdate;
     end;
 
     TPrecompiler_Callback = function(name, args: PChar): boolean; stdcall;
@@ -394,7 +411,7 @@ procedure TMThread.HandleError(ErrorRow,ErrorCol, ErrorPosition: integer; ErrorS
 begin
   if OnError = nil then
     exit;
-  ErrorData^.Row:= ErrorRow - 1;
+  ErrorData^.Row:= ErrorRow;
   ErrorData^.Col := ErrorCol;
   ErrorData^.Position:= ErrorPosition;
   ErrorData^.Error:= ErrorStr;
@@ -537,15 +554,15 @@ begin
   FontPath:= FontP;
 end;
 
-function ThreadSafeCall(ProcName: string; var V: TVariantArray): Variant; extdecl;
+function ThreadSafeCall(Name: string; var V: TVariantArray): Variant; extdecl;
 begin
   if GetCurrentThreadId = MainThreadID then
   begin
     with TPSThread(currthread).PSScript do
-      Result := Exec.RunProcPVar(V,Exec.GetProc(Procname));
+      Result := Exec.RunProcPVar(V, Exec.GetProc(Name));
   end else
   begin
-    CurrThread.SyncInfo^.MethodName:= ProcName;
+    CurrThread.SyncInfo^.MethodName:= Name;
     CurrThread.SyncInfo^.V:= @V;
     CurrThread.SyncInfo^.OldThread := CurrThread;
     CurrThread.SyncInfo^.Res := @Result;
@@ -553,10 +570,10 @@ begin
   end;
 end;
 
-function CallProc(ProcName: string; var V: TVariantArray): Variant; extdecl;
+function CallProc(Name: string; var V: TVariantArray): Variant; extdecl;
 begin
   with TPSThread(currthread).PSScript do
-    Result := Exec.RunProcPVar(V,Exec.GetProc(Procname));
+    Result := Exec.RunProcPVar(V,Exec.GetProc(Name));
 end;
 
 {$I PSInc/Wrappers/other.inc}
@@ -614,18 +631,26 @@ var
   I : integer;
 begin
   inherited Create(CreateSuspended, TheSyncInfo, plugin_dir);
-  PSScript := TPSScript.Create(nil);
-  PSScript.UsePreProcessor:= True;
+  FResume := False;
+  FActiveLine := 0;
+
+  PSScript := TPSScriptExtension.Create(nil);
+  PSScript.UsePreProcessor := True;
   PSScript.CompilerOptions := PSScript.CompilerOptions + [icBooleanShortCircuit];
   PSScript.OnNeedFile := @RequireFile;
   PSScript.OnIncludingFile := @OnIncludingFile;
   PSScript.OnFileAlreadyIncluded := @FileAlreadyIncluded;
-  PSScript.OnProcessDirective:=@OnProcessDirective;
-  PSScript.OnProcessUnknowDirective:=@PSScriptProcessUnknownDirective;
-  PSScript.OnCompile:= @OnCompile;
-  PSScript.OnCompImport:= @OnCompImport;
-  PSScript.OnExecImport:= @OnExecImport;
-  PSScript.OnFindUnknownFile:= @PSScriptFindUnknownFile;
+  PSScript.OnProcessDirective := @OnProcessDirective;
+  PSScript.OnProcessUnknowDirective := @PSScriptProcessUnknownDirective;
+  PSScript.OnCompile := @OnCompile;
+  PSScript.OnCompImport := @OnCompImport;
+  PSScript.OnExecImport := @OnExecImport;
+  PSScript.OnFindUnknownFile := @PSScriptFindUnknownFile;
+
+  PSScript.OnIdle := @Idle;
+  PSScript.OnLineInfo := @LineInfo;
+  PSScript.OnBreakpoint := @BreakPoint;
+  PSScript.OnAfterExecute := @AfterExecute;
 
   with PSScript do
   begin
@@ -794,6 +819,56 @@ begin
   Result := True; // Not used
 end;
 
+procedure TPSThread.ActiveLineChange;
+begin
+  if (FOnActiveLineChange <> nil) then
+    FOnActiveLineChange(FActiveLine);
+end;
+
+procedure TPSThread.SetActiveLine(Line: LongInt);
+begin
+  FActiveLine := Line;
+  TThread.Synchronize(nil, @ActiveLineChange);
+end;
+
+procedure TPSThread.Idle(Sender: TObject);
+begin
+  Sleep(250); //Without this it maxes people's cpus
+
+  if (FResume) then
+  begin
+    FResume := False;
+    PSScript.Resume;
+    ActiveLine := 0;
+  end;
+end;
+
+procedure TPSThread.DebuggerUpdate();
+begin
+  FOnDebuggerUpdate(Self);
+end;
+
+procedure TPSThread.LineInfo(Sender: TObject; const FileName: string; Pos, Row, Col: Cardinal);
+begin
+  if ((PSScript.Exec.DebugMode <> dmRun) and (PSScript.Exec.DebugMode <> dmStepOver)) then
+    ActiveLine := Row;
+end;
+
+procedure TPSThread.BreakPoint(Sender: TObject; const FileName: string; Pos, Row, Col: Cardinal);
+begin
+  ActiveLine := Row;
+  if (FOnDebuggerUpdate <> nil) then
+    TThread.Synchronize(nil, @DebuggerUpdate);
+end;
+
+procedure TPSThread.AfterExecute(Sender: TPSScript);
+begin
+  ActiveLine := 0;
+
+  if (FOnDebuggerUpdate <> nil) then
+    TThread.Synchronize(nil, @DebuggerUpdate);
+end;
+
 procedure SIRegister_Mufasa(cl: TPSPascalCompiler);
 begin
   SIRegister_MML(cl);
@@ -933,9 +1008,9 @@ begin
         with PSScript.CompilerMessages[l] do
           HandleError(Row, Col, Pos, MessageToString,errCompile, ModuleName)
       else
-        psWriteln(PSScript.CompilerErrorToStr(l) + ' at line ' + inttostr(PSScript.CompilerMessages[l].Row - 1));
+        psWriteln(PSScript.CompilerErrorToStr(l) + ' at line ' + inttostr(PSScript.CompilerMessages[l].Row));
     end else
-      psWriteln(PSScript.CompilerErrorToStr(l) + ' at line ' + inttostr(PSScript.CompilerMessages[l].Row - 1));
+      psWriteln(PSScript.CompilerErrorToStr(l) + ' at line ' + inttostr(PSScript.CompilerMessages[l].Row));
   end;
 end;
 
@@ -994,7 +1069,7 @@ end;
 
 procedure TPSThread.SetScript(script: string);
 begin
-   PSScript.Script.Text:= LineEnding+Script; //A LineEnding to create space for future extra's in first line (defines?)
+   PSScript.Script.Text := Script;
 end;
 
 {***implementation TCPThread***}
