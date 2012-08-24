@@ -376,6 +376,10 @@ procedure ps_CombineTPAWrap(const Ar1, Ar2: TPointArray; var Res :  TPointArray)
 begin
   Res := CombineTPA(Ar1,Ar2);
 end;
+procedure ps_MiddleTPAWrap(const a: TPointArray; var Res: TPoint);extdecl;
+begin
+  Res := MiddleTPA(a);
+end;
 procedure ps_ReArrangeandShortenArrayExWrap(const a: TPointArray; w, h: Integer; var Res :  TPointArray);extdecl;
 begin
   Res := ReArrangeandShortenArrayEx(a,w,h);
