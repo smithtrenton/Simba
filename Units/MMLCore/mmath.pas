@@ -40,6 +40,10 @@ function DiscreteGauss(Xstart,Xend : integer; sigma : extended) : TExtendedArray
 function GaussMatrix(N : integer; sigma : extended) : T2DExtendedArray;
 function MinA(a: TIntegerArray): Integer;
 function MaxA(a: TIntegerArray): Integer;
+function fixRad(rad: Extended): Extended; 
+function InAbstractBox(x1, y1, x2, y2, x3, y3, x4, y4: Integer; x, y: Integer): Boolean;
+function MiddleBox(b : TBox): TPoint;
+
 
 implementation
 uses
@@ -47,20 +51,29 @@ uses
 {/\
   Returns a GaussianMatrix with size of X*X, where X is Nth odd-number.
 /\}
-function GaussMatrix(N : integer; sigma : extended) : T2DExtendedArray;
+function GaussMatrix(N:Integer; Sigma:Extended): T2DExtendedArray;
 var
-  x,y,mid : integer;
-  Val : TExtendedArray;
+  hkernel:Array of Extended;
+  Size,i,x,y:Integer;
+  sum:Extended;
 begin
-  N := N * 2-  1;
-  SetLength(Result,N);
-  for x := 0 to n-1 do
-    Setlength(result[x],N);
-  mid := n div 2;
-  Val := DiscreteGauss(-mid,mid,sigma);
-  for x := 0 to n-1 do
-    for y := 0 to n-1 do
-      Result[x][y] := Val[x] * Val[y];
+  Size := 2*N+1;
+  SetLength(hkernel, Size);
+  for i:=0 to Size-1 do
+    hkernel[i] := Exp(-(Sqr((i-N) / Sigma)) / 2.0);
+
+  SetLength(Result, Size, Size);
+  sum:=0;
+  for y:=0 to Size-1 do
+    for x:=0 to Size-1 do
+    begin
+      Result[y][x] := hkernel[x]*hkernel[y];
+      Sum := Sum + Result[y][x];
+    end;
+
+  for y := 0 to Size-1 do
+    for x := 0 to Size-1 do
+      Result[y][x] := Result[y][x] / sum;
 end;
 
 {/\
@@ -181,6 +194,59 @@ begin
   for i := 1 to L do
     if (a[i] > Result) then
       Result := a[i];
+end;
+
+function FixRad(rad: Extended): Extended;
+begin
+  result := rad;
+
+  while (result >= (3.14159265358979320 * 2.0)) do
+    result := result - (3.14159265358979320 * 2.0);
+
+  while (result < 0) do
+    result := result + (3.14159265358979320 * 2.0);
+end;
+
+function InAbstractBox(x1, y1, x2, y2, x3, y3, x4, y4: Integer; x, y: Integer): Boolean;
+var
+  U, D, R, L: Boolean;
+  UB, DB, LB, RB, UM, DM, LM, RM, PI: Extended;
+begin
+  PI := 3.14159265358979320;
+  UM := (-y1 - -y2) div (x1 - x2);
+  DM := (-y4 - -y3) div (x4 - x3);
+  if x1 - x4 <> 0 then
+  begin
+    LM := (-y1 - -y4) div (x1 - x4);
+  end else
+  begin
+    LM := Pi;
+  end;
+  if x2 - x3 <> 0 then
+  begin
+    RM := (-y2 - -y3) div (x2 - x3);
+  end else
+  begin
+    RM := Pi;
+  end;
+  UB := -(UM * x1) + -y1;
+  RB := -(RM * x2) + -y2;
+  DB := -(DM * x3) + -y3;
+  LB := -(LM * x4) + -y4;
+  if (UM * x + UB >= -y) then U := True;
+  if (DM * x + DB <= -y) then D := True;
+  if (RM <> Pi) and (RM >= 0) and (RM * x + RB <= -y) then R := True;
+  if (RM <> Pi) and (RM < 0) and (RM * x + RB >= -y) then R := True;
+  if (RM = Pi) and (x < x2) then R := True;
+  if (LM <> Pi) and (LM >= 0) and (LM * x + LB >= -y) then L := True;
+  if (LM <> Pi) and (LM < 0) and (LM * x + LB <= -y) then L := True;
+  if (LM = Pi) and (x > x1) then L := True;
+  if U and D and L and R then Result := True;
+end;
+
+function MiddleBox(b : TBox): TPoint;
+begin
+  result := point((b.x2+b.x1) div 2,(b.y2+b.y1) div 2);
 end;
 
 end.

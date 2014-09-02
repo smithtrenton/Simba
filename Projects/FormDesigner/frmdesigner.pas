@@ -100,7 +100,7 @@ type
       write FControlsClassPStd;
     function GetControlType(cmp: TControl): integer;
     procedure AddToStringGrid(cmp: TControl);//not used now
-    procedure FormToSCList(form: TForm);
+    procedure FormToSCList(form: TDsgnForm);
     procedure AddToStringGridEx(smb: TSimbaComponent);//не забыть проверку свойства tag
     procedure UpdateControlData();
     procedure SetControl(Sender: TObject);
@@ -121,7 +121,7 @@ var
 implementation
 
 {$R *.lfm}
-uses typinfo,rttiutils{$IFDEF WINDOWS},commctrl{$ENDIF};
+uses typinfo,rttiutils{,commctrl};
 
 function TrimCharLeft(const S: string; C: Char): string;
 var
@@ -203,12 +203,14 @@ begin
   Self.FControlsClassPStd[6] := TListBox;
   Self.FControlsClassPStd[7] := TComboBox;
   Self.FControlsClassPStd[8] := TRadioButton;
-  Self.FControlsClassPStd[9] := TShape;            //untested
-  {$IFDEF WINDOWS}f:=TDsgnForm.Create(self);{$ELSE}f:=TDsgnForm.Create(nil);{$ENDIF}
- {$IFDEF WINDOWS} f.Parent:=CompForm.Panel1;{$ENDIF}
-  f.Left:=0;
-  f.Top:=0;
-  f.Show;
+  Self.FControlsClassPStd[9] := TShape;
+  f:=TDsgnForm.Create(self);
+  //f.Parent:=CompForm.Panel1;
+  f.Left:=Self.Panel1.Left;
+  f.Top:=Self.Panel1.Top;
+  //f.Show;
+ // setParent(Self.Panel1);
+  LCLIntf.SetParent(f.Handle,self.Panel1.Handle);
   SetModeScript;
   ppEdit.OnExit:=OnExit;
   smbCmp:= CompList.AddItem;
@@ -222,7 +224,7 @@ end;
 procedure TCompForm.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
    CloseAction := caNone;
-   Application.Minimize;
+   self.Hide;
 end;
 
 procedure TCompForm.ApplyChClick(Sender: TObject);
@@ -273,8 +275,10 @@ var
 
 procedure TCompForm.FormShow(Sender: TObject);
 begin
-  PageControl1.ActivePageIndex := 0;
+ // PageControl1.ActivePageIndex := 0;
  // DsgnForm.Show;
+  if Assigned(f) then
+   f.Show;
 end;
 
 procedure TCompForm.lvAdvancedCustomDrawItem(Sender: TCustomListView;
@@ -379,10 +383,11 @@ begin
   if assigned(complist) then
    complist.Free;
   complist:=TSimbaComponentList.Create;
-  {$IFDEF WINDOWS}f:=TDsgnForm.Create(self);{$ELSE}f:=TDsgnForm.Create(nil);{$ENDIF}
- {$IFDEF WINDOWS} f.Parent:=CompForm.Panel1;{$ENDIF}
+  f:=TDsgnForm.Create(self);
+ { f.Parent:=CompForm.Panel1;}
   f.Left:=0;
   f.Top:=0;
+  LCLIntf.SetParent(f.Handle,self.Panel1.Handle);
   f.Show;
 end;
 
@@ -532,6 +537,7 @@ begin
   f:=TDsgnForm.Create(panel1);
   f.Left:=0;
   f.Top:=0;
+  LCLIntf.SetParent(f.Handle,self.Panel1.Handle);
   f.Show;
   end;
   //f:=nil;
@@ -568,7 +574,7 @@ begin
   end;}
 end;
 
-procedure TCompForm.FormToSCList(form: TForm);
+procedure TCompForm.FormToSCList(form: TDsgnForm);
 var
    i: integer;
    smb: TSimbaComponent;

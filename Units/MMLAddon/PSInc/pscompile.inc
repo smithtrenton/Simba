@@ -79,7 +79,12 @@ AddTypeS('TReplaceFlags','set of TReplaceFlag');
 AddTypeS('StrExtr','(Numbers, Letters, Others);');
 AddTypeS('TDateTime','Double');
 AddTypeS('TIntegerArray', 'Array of LongInt');
+AddTypeS('TCardinalArray', 'Array of Cardinal');
+AddTypeS('T2DCardinalArray', 'Array of TCardinalArray');
+AddTypeS('TCharArray', 'Array of Char');
+AddTypeS('T2DCharArray', 'Array of TCharArray');
 AddTypeS('TByteArray','Array of byte');
+AddTypeS('T2DByteArray', 'array of TByteArray');
 AddTypeS('TExtendedArray','Array of extended');
 AddTypeS('TBoolArray', 'Array of Boolean');
 AddTypes('TBox', 'record X1,Y1,X2,Y2 : Integer; end;');
@@ -88,10 +93,12 @@ AddTypeS('TPointArray','Array of TPoint');
 AddTypeS('T2DPointArray','Array of TPointArray');
 AddTypeS('TPointArrayArray','Array of TPointArray');
 AddTypeS('TBmpMirrorStyle','(MirrorWidth,MirrorHeight,MirrorLine)');
+AddTypeS('TBmpThreshMethod', '(TM_Mean, TM_MinMax)');
+AddTypeS('TBmpResizeMethod', '(RM_Nearest, RM_Bilinear)');
 AddTypeS('TMask','record  White, Black : TPointArray; WhiteHi,BlackHi : integer; W,H : integer;end;');
-addtypeS('PPoint','record R,T : extended; end;');
+AddTypeS('PPoint','record R,T : extended; end;');
 AddTypeS('TTarget_Exported','record int1,int2,int3,int4,int5,int6,int7,int8,int9,int10,int11,int12,int13,int14,int15,int16:integer; end;');
-
+AddTypes('TBalloonFlags', '(bfNone, bfInfo, bfWarning, bfError)');
 AddTypes('TSDTMPointDef', 'record x, y, Color, Tolerance, AreaSize, AreaShape: integer; end;');
 AddTypes('TSDTMPointDefArray', 'Array Of TSDTMPointDef;');
 AddTypes('TSDTM','record MainPoint: TSDTMPointDef; SubPoints: TSDTMPointDefArray; end;');
@@ -125,9 +132,5 @@ AddTypes('TSysProcArr', 'array of TSysProc;');
 
 AddTypes('THashType', '(htHaval, htMD4, htMD5, htRIPEMD128, htRIPEMD160, htSHA1, htSHA256, htSHA384, htSHA512, htTiger);');
 
-AddTypes('TOCRFilterData', 'record _type, is_text_color: integer; r_low,r_high,g_low,g_high,b_low,b_high,set_col: integer; ref_color,tol,cts: integer; end;');
+AddTypes('TOCRFilterData', 'record _type: integer; is_text_color: boolean; r_low,r_high,g_low,g_high,b_low,b_high,set_col: integer; ref_color,tol,cts: integer; end;');
 AddTypes('TOCRFilterDataArray', 'array of TOCRFilterData');
-
-AddTypes('TMsgDlgType', '( mtWarning, mtError, mtInformation, mtConfirmation, mtCustom )');
-AddTypes('TMsgDlgBtn', '( mbYes, mbNo, mbOK, mbCancel, mbAbort, mbRetry, mbIgnore, mbAll, mbNoToAll, mbYesToAll, mbHelp )');
-AddTypes('TMsgDlgButtons', 'set of TMsgDlgBtn');

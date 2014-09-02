@@ -89,6 +89,16 @@ begin
   SortATPAFromMidPoint(a,from);
 end;
 
+procedure ps_SortATPAFromFirstPointX(var a: T2DPointArray; const From: TPoint); extdecl;
+begin
+  SortATPAFromFirstPointX(a, From);
+end;
+
+procedure ps_SortATPAFromFirstPointY(var a: T2DPointArray; const From: TPoint); extdecl;
+begin
+  SortATPAFromFirstPointY(a, From);
+end;
+
 procedure ps_InvertTPA(var a: TPointArray); extdecl;
 begin
   InvertTPA(a);
@@ -149,14 +159,29 @@ begin
   result := SplitTPA(arr,dist);
 end;
 
+function ps_ClusterTPAEx(const TPA: TPointArray; width, height: Integer): T2DPointArray;  extdecl;
+begin
+   result := ClusterTPAEx(tpa, width, height);
+end;
+
+function ps_ClusterTPA(const TPA: TPointArray; dist: Integer): T2DPointArray;  extdecl;
+begin
+   result := ClusterTPA(tpa, dist);
+end;
+
 function ps_FloodFillTPA(const TPA : TPointArray) : T2DPointArray; extdecl;
 begin
   result := FloodFillTPA(TPA);
 end;
 
+procedure ps_FilterPointsPieEx(var Points: TPointArray; const SD, ED, MinR, MaxR: Extended; Mx, My: Integer; Natural: Boolean);extdecl;
+begin
+  FilterPointsPie(points,sd,ed,minr,maxr,mx,my,natural);
+end;
+
 procedure ps_FilterPointsPie(var Points: TPointArray; const SD, ED, MinR, MaxR: Extended; Mx, My: Integer);extdecl;
 begin
-  FilterPointsPie(points,sd,ed,minr,maxr,mx,my);
+  FilterPointsPie(points,sd,ed,minr,maxr,mx,my,false);
 end;
 
 procedure ps_FilterPointsDist(var Points: TPointArray; const MinDist, MaxDist: Extended; Mx, My: Integer); extdecl;
@@ -274,6 +299,16 @@ begin
   AppendTPA(tpa,ToAppend);
 end;
 
+function ps_TPAFromLine(const x1, y1, x2, y2: Integer): TPointArray;  extdecl;
+begin
+  Result := TPAFromLine(x1, y1, x2, y2);
+end;
+
+function ps_EdgeFromBox(const Box: TBox): TPointArray;  extdecl;
+begin
+  Result := EdgeFromBox(Box);
+end;
+
 function ps_TPAFromBox(const Box : TBox) : TPointArray;  extdecl;
 begin
   result := TPAFromBox(box);
@@ -287,6 +322,11 @@ end;
 function ps_TPAFromCircle(const CX, CY, Radius: Integer) : TPointArray;  extdecl;
 begin
   result := TPAFromCircle(CX, CY, Radius);
+end;
+
+function ps_TPAFromPolygon(const shape: TPointArray): TPointArray; extdecl;
+begin
+  result := TPAFromPolygon(shape);
 end;
 
 procedure ps_FillEllipse(var a: TPointArray);
@@ -404,6 +444,14 @@ procedure ps_MergeATPAWrap(const ATPA : T2DPointArray; var Res: TPointArray); ex
 begin
   Res := MergeATPA(ATPA);
 end;
+procedure ps_TPAFromLineWrap(const x1, y1, x2, y2: Integer; var Res: TPointArray); extdecl;
+begin
+  Res := TPAFromLine(x1, y1, x2, y2);
+end;
+procedure ps_EdgeFromBoxWrap(const Box: TBox; var Res: TPointArray); extdecl;
+begin
+  Res := EdgeFromBox(Box);
+end;
 procedure ps_TPAFromBoxWrap(const Box : TBox; var Res : TPointArray);extdecl;
 begin
   Res := TPAFromBox(Box);
@@ -464,4 +512,45 @@ begin
   SetLength(result,l+1);
   for i := 0 to l do
     result[i] := copy(ATPA[i],0,Length(ATPA[i]));
+end;
+
+function ps_MiddleBox(b : TBox) : TPoint;
+begin
+  result := MiddleBox(b);
+end;
+
+function  ps_TPAPosNext(const Find: TPoint; const V: TPointArray; const PrevPos: Integer;
+          const IsSortedAscending: Boolean): Integer; extdecl;
+begin
+  result:=TPAPosNext(Find,V,PrevPos,IsSortedAscending);
+end;
+
+function ps_GlueTPAs(const V1, V2: TPointArray; const IsSortedAscending,byDifference: Boolean):TPointArray; extdecl;
+begin
+  result:=GlueTPAs(V1,V2,IsSortedAscending,byDifference);
+end;
+
+procedure ps_FilterTPAsBetween(var atpa: T2DPointArray; const minLength, maxLength: integer); extdecl;
+begin
+  filterTPAsBetween(atpa, minLength, maxLength);
+end;
+
+procedure ps_MedianTPAEx(var tpa: TPointArray; out x, y: integer); extdecl;
+begin
+  MedianTPAEx(tpa, x, y);
+end;
+
+function ps_MedianTPA(var tpa: TPointArray): TPoint; extdecl;
+begin
+  result := MedianTPA(tpa);
+end;
+
+procedure ps_FilterPointsBox(var points: TPointArray; x1, y1, x2, y2: integer); extdecl;
+begin
+  FilterPointsBox(points, x1, y1, x2, y2);
+end;
+
+function ps_PartitionTPA(const TPA: TPointArray; BoxWidth, BoxHeight:Integer): T2DPointArray; extdecl;
+begin
+  Result := PartitionTPA(TPA, BoxWidth, BoxHeight);
 end;

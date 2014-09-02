@@ -54,13 +54,13 @@ type
     destructor Destroy; override;
   end;
 
+var
+  SQLite3Loaded: boolean;
+
 implementation
 
 uses
   Client;
-
-var
-  SQLite3Loaded: boolean = False;
 
 // http://sqlite.org/c3ref/errcode.html
 function TMSQLite3.errCode(index : integer) : integer;
@@ -220,16 +220,18 @@ begin
 end;
 
 initialization
+  SQLite3Loaded := False;
   try
     InitialiseSQLite();
     SQLite3Loaded := True;
   except
     on e: EInOutError do
     begin
-      WriteLn(e.Message);
-      WriteLn('You can find the library at "http://www.sqlite.org/".');
+      WriteLn('Simba couldn''t find the sqlite library, so sqlite functionality is missing.');
+      WriteLn('Don''t worry you can find the library at "http://www.sqlite.org/".');
     end;
   end;
 finalization
-  ReleaseSQLite();
+  if (SQLite3Loaded) then
+    ReleaseSQLite();
 end.

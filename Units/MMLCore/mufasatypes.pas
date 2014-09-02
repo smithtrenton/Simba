@@ -48,16 +48,26 @@ operator - (PT1,PT2 : TPoint) : TPoint;
 { TPoint comp}
 operator = (PT1,PT2 : TPoint) : boolean;
 
+operator >(PT1, PT2: TPoint): boolean;
+operator <(PT1, PT2: TPoint): boolean;
+
+
 type
+  PRGB24 = ^TRGB24;
   TRGB24 = packed record
     B, G, R : byte;
   end;
-  PRGB24 = ^TRGB24;
+
+  PPRGB32 = ^PRGB32;
+  PRGB32 = ^TRGB32;
   TRGB32 = packed record
     B, G, R, A: Byte;
   end;
-  PRGB32 = ^TRGB32;
+
+  PRGB32Array = ^TRGB32Array;
   TRGB32Array = array of TRGB32;
+
+  PPRGB32Array = ^TPRGB32Array;
   TPRGB32Array = array of PRGB32; //Array of Pointers
 
   THSL = record
@@ -65,7 +75,9 @@ type
   end;
   PHSL = ^THSL;
 
+  PHSLArray = ^THSLArray;
   THSLArray = array of THSL;
+  P2DHSLArray = ^T2DHSLArray;
   T2DHSLArray = array of array of THSL;
 
   TRetData = record
@@ -73,38 +85,62 @@ type
     IncPtrWith : integer;
     RowLen : integer;
   end;
+
   TBmpMirrorStyle = (MirrorWidth,MirrorHeight,MirrorLine); //LineMirror is in line x=y;
+  TBmpThreshMethod = (TM_Mean, TM_MinMax);
+  TBmpResizeMethod = (RM_Nearest, RM_Bilinear);
+
   TTargetWindowMode = (w_BMP, w_Window, w_HDC, w_ArrayPtr, w_XWindow);
   TClickType = (mouse_Left, mouse_Right, mouse_Middle);
   TMousePress = (mouse_Down, mouse_Up);
 
+  PBmpThreshMethod = ^TBmpThreshMethod;
+  PBmpResizeMethod = ^TBmpResizeMethod;
+
   TStringArray = array of String;
   T2DStringArray = array of TStringArray;
+
+  PPoint = ^TPoint;
+
+  PPointArray = ^TPointArray;
   TPointArray = array of TPoint;
+  P2DPointArray = ^T2DPointArray;
   T2DPointArray = array of TPointArray;
+
   TVariantArray = Array of Variant;
   PVariantArray = ^TVariantArray;
+
+  PIntegerArray = ^TIntegerArray;
   TIntegerArray = Array of Integer;
+  P2DIntArray = ^T2DIntArray;
   T2DIntArray = array of TIntegerArray;
   T2DIntegerArray = T2DIntArray;
+
+  TByteArray = array of Byte;
+  T2DByteArray = array of TByteArray;
+
   TBoolArray = array of boolean;
   TBooleanArray = TBoolArray;
   T2DBoolArray = Array of TBoolArray;
+
   TExtendedArray = Array of Extended;
+  P2DExtendedArray = ^T2DExtendedArray;
   T2DExtendedArray = Array of Array of Extended;
 
   { Crypto }
   THashType = (htHaval, htMD4, htMD5, htRIPEMD128, htRIPEMD160,
                htSHA1, htSHA256, htSHA384, htSHA512, htTiger);
+  PHashType = ^THashType;
 
   { Mask Types }
+  PMask = ^TMask;
   TMask = record
     White, Black : TPointArray;
     WhiteHi,BlackHi : integer;
     W,H : integer;
   end;
-  { File types }
 
+  { File types }
   TMufasaFile = record
     Path: String;
     FS: TFileStream;
@@ -117,6 +153,7 @@ type
     Possibly add .name too?
     Then one could give DTM names, which would be easy for debugging.
   }
+  PBox = ^TBox;
   TBox = record
     x1, y1, x2, y2: Integer;
   end;
@@ -202,8 +239,6 @@ type
 type
    TBufferByteArray = Array[0..524287] of Byte;
    PBufferByteArray = ^TBufferByteArray;
-
-   PPoint = ^TPoint;
 
   TOCRFilterData = packed record
       _type: integer;
@@ -407,6 +442,7 @@ begin
   Result.x := PT1.x + PT2.x;
   Result.y := Pt1.y + PT2.y;
 end;
+
 operator-(PT1, PT2: TPoint): TPoint;
 begin
   Result.x := PT1.x - PT2.x;
@@ -416,6 +452,16 @@ end;
 operator=(PT1, PT2: TPoint): boolean;
 begin
   result := ((PT1.x = PT2.x) and (pt1.y = pt2.y));
+end;
+
+operator >(PT1, PT2: TPoint): boolean;
+begin
+  Result := ((PT1.X > PT2.X) and (PT1.Y > PT2.Y));
+end;
+
+operator <(PT1, PT2: TPoint): boolean;
+begin
+  Result := ((PT1.X < PT2.X) and (PT1.Y < PT2.Y));
 end;
 
 initialization

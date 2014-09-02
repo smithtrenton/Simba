@@ -1,6 +1,6 @@
 {
-	This file is part of the Mufasa Macro Library (MML)
-	Copyright (c) 2009-2012 by Raymond van Venetië and Merlijn Wajer
+    This file is part of the Mufasa Macro Library (MML)
+    Copyright (c) 2009-2012 by Raymond van Venetië and Merlijn Wajer
 
     MML is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ uses
 
   uPSR_std, uPSR_controls,uPSR_classes,uPSR_graphics,uPSR_stdctrls,uPSR_forms, uPSR_mml,
   uPSR_menus, uPSR_dll,
-  // uPSI_ComCtrls, uPSI_Dialogs,  //Removed in Laz PascalScript
+  uPSI_ComCtrls, uPSI_Dialogs,
   files,
   dialogs,
   dtm, //Dtms!
@@ -87,6 +87,7 @@ uses
   Graphics, //For Graphics types
   math, //Maths!
   mmath, //Real maths!
+  mmltimer,
   strutils,
   fileutil,
   tpa, //Tpa stuff
@@ -102,9 +103,11 @@ uses
   DCPmd4, DCPmd5,
   DCPripemd128, DCPripemd160,
   DCPsha1, DCPsha256, DCPsha512,
-  DCPtiger,
+  DCPtiger
 
-  SimbaUnit,updateform, mmisc, mmlpsthread;  // for GetTickCount and others.//Writeln
+  {$IFDEF USE_SQLITE}, msqlite3{$ENDIF}
+
+  , SimbaUnit, updateform, mmisc, mmlpsthread;  // for GetTickCount and others.//Writeln
 
 {$ifdef Linux}
   {$define PS_SafeCall}
@@ -288,8 +291,8 @@ begin
   SIRegister_Forms(x);
   SIRegister_ExtCtrls(x);
   SIRegister_Menus(x);
-  //SIRegister_ComCtrls(x);
-  //SIRegister_Dialogs(x);
+  SIRegister_ComCtrls(x);
+  SIRegister_Dialogs(x);
 
   ScriptPath := IncludeTrailingPathDelimiter(ExpandFileName(ExtractFileDir(Filename)));
   ScriptFile := ExtractFileName(Filename);
@@ -341,8 +344,8 @@ begin
   RIRegister_Forms(x);
   RIRegister_ExtCtrls(x);
   RIRegister_Menus(x);
-  //RIRegister_ComCtrls(x);
-  //RIRegister_Dialogs(x);
+  RIRegister_ComCtrls(x);
+  RIRegister_Dialogs(x);
   RegisterDLLRuntime(se);
   RIRegister_MML(x);
 {  with x.FindClass('TMufasaBitmap') do
@@ -403,8 +406,9 @@ procedure TSimbaPSExtension.StartExtension;
 begin
   if assigned(PSInstance) then
     exit;//Already started..
-  { Create script, and see if the extension is valid. (If it compiles) }
+
   PSInstance := TPSScript.Create(nil);
+  PSInstance.CompilerOptions := PSInstance.CompilerOptions + [icAllowNoBegin, icAllowNoEnd];
 
   with PSInstance do
   begin
@@ -426,20 +430,23 @@ begin
     FWorking := PSInstance.Compile;
   except
     on e : exception do
-      FormWritelnEx(format('Error in Simba extension (%s) : %s',[FileName,e.message]));
+      FormWritelnEx(format('Error in Simba extension compilation (%s) : %s',[FileName,e.message]));
   end;
+
   if FWorking then
-    formWritelnEx('Extension Enabled')
-  else
+  begin
+    formWritelnEx('Extension Enabled');
+
+    if InitScript then
+      mDebugLn('Init procedure successfully called')
+    else
+      mDebugLn('Init procedure didn''t execute right, or couldn''t be found');
+  end else
   begin
     formWritelnEx('Extension Disabled - Did not compile');
     OutputMessages;
   end;
 
-  if InitScript then
-    mDebugLn('Init procedure successfully called')
-  else
-    mDebugLn('Init procedure didn''t execute right, or couldn''t be found');
   Enabled:= FWorking;
 end;
 
@@ -453,4 +460,3 @@ end;
 
 
 end.
-

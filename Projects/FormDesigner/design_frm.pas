@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, LCLType,LCLIntf, Dialogs,
-  TypInfo, Math, cselectonruntime, Messages, ComCtrls, ExtCtrls, Menus,bitmaps,Graphics ;
+  TypInfo, Math, cselectonruntime, LMessages, ComCtrls, ExtCtrls, Menus,bitmaps,Graphics ;
 type
  THControl = Class(TControl);
   { TDsgnForm }
@@ -110,6 +110,9 @@ procedure TDsgnForm.FormCreate(Sender: TObject);
 begin
   compForm.SetControl(sender);
   imgdialog:=TOpenDialog.Create(self);
+  Self.BorderStyle:=bsToolWindow;
+  Self.FormStyle:=fsStayOnTop;
+  Self.ShowInTaskBar:=stNever;
   SetMode(0);
 end;
 
@@ -272,14 +275,22 @@ var
         TWinControl(comp).ParentWindow := TWinControl(Self).Handle;
       //  if comparetext(TWinControl(comp).ClassName,'TForm') =0  then
         TWinControl(comp).Parent := TWinControl(Self); //else TWinControl(comp).Parent:=DsgnForm;
+        try
         TWinControl(comp).Name := cname + IntToStr(_ControlsCreated);
+        except
+        TWinControl(comp).Name := cname + IntToStr(_ControlsCreated+random(20));
+        end;
         TWinControl(comp).Left := X;
         TWinControl(comp).Top := Y;
       end
       else if (comp is TControl) then begin
        // if comparetext(TControl(Sender).ClassName,'TForm')=0 then
         Tcontrol(comp).Parent := TWinControl(Self);// else exit;
+        try
         TControl(comp).Name := cname + IntToStr(_ControlsCreated);
+        except
+        TControl(comp).Name := cname + IntToStr(_ControlsCreated+random(20));
+        end;
         TControl(comp).Left := X;
         TControl(comp).Top := Y;
       end;
@@ -382,7 +393,7 @@ end;
 procedure TDsgnForm.CreateWnd;
 begin
   inherited CreateWnd;
-  {$IFDEF WINDOWS}SendMessage(Self.Handle, WM_SETICON, 1, 0);{$ENDIF}
+ // SendMessage(Self.Handle, LM_SETICON, 1, 0);
 end;
 
 procedure TDsgnForm.DeleteComponent();
@@ -416,7 +427,7 @@ end;
 
 procedure TDsgnForm.SetScriptMode();
 begin
-  Self.BorderStyle:=BsSizeable;
+  //Self.BorderStyle:=BsSizeable;
   Self.Width:=320;
   Self.Height:=240;
   Self.Caption:=Self.Name;
@@ -424,7 +435,7 @@ end;
 
 procedure TDsgnForm.SetProgressMode();
 begin
-  Self.BorderStyle:=BsDialog;
+ // Self.BorderStyle:=BsDialog;
   Self.Width:=775;
   Self.Height:=563;
   Self.Caption:='Progress form design mode (Some settings are not considered)';

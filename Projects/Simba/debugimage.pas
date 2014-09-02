@@ -56,12 +56,15 @@ var
 implementation
 
 uses
-  MufasaTypes, math, graphtype, IntfGraphics,SimbaUnit,lclintf,colour_conv,InterfaceBase;
+  MufasaTypes, math, graphtype, IntfGraphics,SimbaUnit,lclintf,InterfaceBase;
 { TDebugImgForm }
 
 procedure TDebugImgForm.FormCreate(Sender: TObject);
 begin
   BlackDebugImage;
+  {$IFDEF MSWINDOWS}
+    ShowInTaskBar:= stAlways; // Allows the Debug Img to show in Taskbar on windows system.
+  {$ENDIF}
 end;
 
 procedure TDebugImgForm.DrawImageResize(Sender: TObject);
@@ -103,13 +106,10 @@ end;
 
 procedure TDebugImgForm.ShowDebugImgForm(DispSize : TPoint);
 begin
-  if not Visible then
-    show;
+  if not Visible then 
+    Show;
   if (DispSize.x <> Width) or (DispSize.y  <> height) then
-  begin;
-    Width := DispSize.x;
-    Height := DispSize.y;
-  end;
+    SetBounds(Max(1, Left), Max(1, Top), DispSize.x, DispSize.y);
   FormStyle := fsStayOnTop;
 end;
 

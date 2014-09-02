@@ -147,61 +147,139 @@ begin
   CurrThread.FormCallBack(m_Disguise,PCaption);
 end;
 
-procedure ps_ShowMessage(msg : string); extdecl;
+procedure ps_ShowMessage(msg: string); extdecl;
 var
-  PMsg : Pchar;
+  PMsg: Pchar;
 begin
-  PMsg := PChar(msg);
-  CurrThread.FormCallBack(m_ShowMessage,PMsg);
+  if (GetCurrentThreadID() = MainThreadID) then
+    ShowMessage(msg)
+  else begin
+    PMsg := PChar(msg);
+    CurrThread.FormCallBack(m_ShowMessage, PMsg);
+  end;
 end;
-
 
 function ps_MessageBox(Text, Caption: string; Flags: LongInt): Integer;
 var
-  MessageBoxData : TMessageBoxdata;
+  MessageBoxData: TMessageBoxdata;
 begin
-  with MessageBoxData do
-  begin
-    AText := PChar(text);
-    ACaption := PChar(Caption);
-    AFlags := Flags;
-    CurrThread.FormCallBack(m_MessageBox,@MessageBoxData);
-    Result := res;
+  if (GetCurrentThreadID() = MainThreadID) then
+    Result := Application.MessageBox(PChar(Text), PChar(Caption), Flags)
+  else
+    with MessageBoxData do
+    begin
+      AText := PChar(Text);
+      ACaption := PChar(Caption);
+      AFlags := Flags;
+      CurrThread.FormCallBack(m_MessageBox,@MessageBoxData);
+      Result := res;
+    end;
+end;
+
+function ps_MessageDlg(const Caption, Msg: string; DlgType: TMsgDlgType; Buttons: TMsgDlgButtons): integer;
+var
+  MessageDlgData: TMessageDlgData;
+begin
+  if (GetCurrentThreadID() = MainThreadID) then
+    Result := MessageDlg(Caption, Msg, DlgType, Buttons, 0)
+  else
+    with MessageDlgData do
+    begin
+      ACaption := Caption;
+      AMsg := Msg;
+      ADlgType := DlgType;
+      Abuttons := Buttons;
+      CurrThread.FormCallBack(m_MessageDlg,@MessageDlgData);
+      Result := res;
+    end;
+end;
+
+function ps_InputQuery(const ACaption, APrompt : String; var Value : String): Boolean;
+var
+  InputQueryData: TInputQueryData;
+begin
+  if (GetCurrentThreadID() = MainThreadID) then
+    Result := InputQuery(ACaption, APrompt, Value)
+  else begin
+    InputQueryData.ACaption:= ACaption;
+    InputQueryData.APrompt:= APrompt;
+    InputQueryData.Value:= Value;
+    CurrThread.FormCallBack(m_InputQuery, @InputQueryData);
+    Result := InputQueryData.Res;
+    Value := InputQueryData.Value;
   end;
 end;
 
-function ps_MessageDlg(const Caption, Msg: string; DlgType: TMsgDlgType;
-  Buttons: TMsgDlgButtons) : integer;
+procedure ps_ShowBalloonHint(const Title, Hint: string; const Timeout: Integer; const Flag: TBalloonFlags);
 var
-  MessageDlgData : TMessageDlgData;
+  Data: TBalloonHintData;
 begin
-  with MessageDlgData do
-  begin
-    ACaption := Caption;
-    AMsg := Msg;
-    ADlgType := DlgType;
-    Abuttons := Buttons;
-    CurrThread.FormCallBack(m_MessageDlg,@MessageDlgData);
-    Result := res;
-  end;
-end;
-
-function ps_InputQuery(const ACaption, APrompt : String; var Value : String) : Boolean;extdecl;
-var
-  InputQueryData : TInputQueryData;
-begin
-  InputQueryData.ACaption:= ACaption;
-  InputQueryData.APrompt:= APrompt;
-  InputQueryData.Value:= Value;
-  CurrThread.FormCallBack(m_InputQuery,@InputQueryData);
-  Result := InputQueryData.Res;
-  Value := InputQueryData.Value;
+  Data.ATitle := Title;
+  Data.AHint := Hint;
+  Data.ATimeout := Timeout;
+  Data.AFlag := Flag;
+  CurrThread.FormCallBack(m_BalloonHint, @Data);
 end;
 
 procedure ps_TerminateScript; extdecl;
 begin;
   CurrThread.Terminate;
 end;
+
+{$DEFINE PS_ADDONTERMINATE}
+function ps_AddOnTerminate(const proc : string): Boolean; extdecl;
+var
+  oldProcs : TVariantArray;
+  oldProcsHigh, i : Integer;
+  lowerCaseProc : string;
+begin;
+  result := false;
+
+  if not CurrThread.Prop.GetProp(SP_OnTerminate, oldProcs) then
+     SetLength(oldProcs, 1);
+
+  oldProcsHigh  := High(oldProcs);
+  lowerCaseProc := LowerCase(proc);
+
+  for i := 0 to oldProcsHigh do
+    if LowerCase(oldProcs[i]) = lowerCaseProc then
+      exit;
+
+  SetLength(oldProcs, Length(oldProcs) + 1);
+  oldProcs[High(oldProcs)] := proc;
+  CurrThread.Prop.SetProp(SP_OnTerminate, oldProcs);
+
+  result := True;
+end;
+
+function ps_DeleteOnTerminate(const proc : string): Boolean; extdecl;
+var
+  oldProcs, newProcs : TVariantArray;
+  oldProcsHigh, i : Integer;
+  lowerCaseProc, lowerCaseOldProc : string;
+begin;
+  result := False;
+
+  if not CurrThread.Prop.GetProp(SP_OnTerminate, OldProcs) then
+     exit;
+
+  oldProcsHigh  := High(oldProcs);
+  lowerCaseProc := LowerCase(proc);
+
+  for i := 0 to oldProcsHigh do
+    lowerCaseOldProc := lowercase(OldProcs[i]);
+    if lowerCaseOldProc = lowerCaseProc then
+      result := true
+    else
+    begin
+      setlength(newProcs, Length(newProcs) + 1);
+      newProcs[High(newProcs)] := lowerCaseOldProc;
+    end;
+
+  CurrThread.Prop.SetProp(SP_OnTerminate, NewProcs);
+
+end;
+
 function ps_GetTimeRunning: LongWord; extdecl;
 begin;
   result := GetTickCount - CurrThread.StartTime;
@@ -219,12 +297,34 @@ var
   x : integer;
 begin;
   x := time;
-  h := x div(1000 * 60 * 60);
-  x := x mod (1000 * 60 * 60);
-  m := x div (1000 * 60);
-  x := x mod (1000 * 60);
+  h := x div (3600000);
+  x := x mod (3600000);
+  m := x div (60000);
+  x := x mod (60000);
   s := x div (1000);
 end;
+
+procedure ps_ConvertTime64(time: int64; var y, m, w, d, h, min, s: integer); extdecl;
+var
+  x : int64;
+begin
+  x := time;
+  y := x div (31536000000); // 1000 * 60 * 60 * 24 * 365 (1 year or 365 days)
+  x := x mod (31536000000);
+  m := x div (2592000000); // 1000 * 60 * 60 * 24 * 30 (1 month or 30 days)
+  x := x mod (2592000000);
+  w := x div (604800000); // 1000 * 60 * 60 * 24 * 7 (1 week or 7 days)
+  x := x mod (604800000);
+  d := x div (86400000); // 1000 * 60 * 60 * 24 (1 day or 24 hours)
+  x := x mod (86400000);
+  h := x div (3600000); // 1000 * 60 * 60 (1 hour or 60 minutes)
+  x := x mod (3600000);
+  min := x div (60000); // 1000 * 60 (1 minute or 60 seconds)
+  x := x mod (60000);
+  s := x div (1000); // 1000 (1 second)
+  x := x mod (1000);
+end;
+
 procedure ps_DecodeDate ( const SourceDate  : TDateTime; var Year, Month, Day  : Word ); extdecl;
 begin
   decodedate(sourcedate,year,month,day);
@@ -293,4 +393,9 @@ end;
 procedure ps_SetTarget(Proc: TSysProc);
 begin
   CurrThread.Client.IOManager.SetTargetEx(Proc);
+end;
+
+function ps_GetEnvironmentVariable(const VarName: string): string; extdecl;
+begin
+  result := GetEnvironmentVariableUTF8(VarName);
 end;

@@ -6,7 +6,7 @@ uses
 procedure SIRegister_MML(cl: TPSPascalCompiler);
 
 implementation
-
+uses mmltimer;
 procedure SIRegister_TMufasaBitmap(cl : TPSPascalCompiler);
 begin
   with cl.AddClassN(cl.FindClass('TObject'),'TMufasaBitmap') do
@@ -19,6 +19,8 @@ begin
     RegisterMethod('procedure FastSetPixels(TPA : TPointArray; Colors : TIntegerArray);');
     RegisterMethod('procedure DrawATPA(ATPA : T2DPointArray; Colors : TIntegerArray);');
     RegisterMethod('procedure DrawTPA(TPA : TPointArray; Color : TColor);');
+    RegisterMethod('procedure LineTo(Src,Dest: TPoint; Color : TColor);');
+    RegisterMethod('function FindColors(var points: TPointArray; const color: integer): boolean;');
     RegisterMethod('procedure DrawToCanvas(x, y: Integer; Canvas: TCanvas);');
     RegisterMethod('function FastGetPixel(x,y : integer) : TColor;');
     RegisterMethod('procedure CopyClientToBitmap(IOManager : TObject; Resize : boolean;x,y : integer; xs, ys, xe, ye: Integer);');
@@ -39,11 +41,12 @@ begin
     RegisterMethod('procedure Invert(TargetBitmap : TMufasaBitmap);');
     RegisterMethod('procedure Posterize(TargetBitmap : TMufasaBitmap; Po : integer);');
     RegisterMethod('function Copy(const xs,ys,xe,ye : integer) : TMufasaBitmap;');
+    RegisterMethod('procedure Crop(const xs,ys,xe,ye : integer);');
     RegisterMethod('function ToString : string;');
     RegisterMethod('function ToTBitmap : TBitmap;');
     RegisterMethod('function CreateTMask : TMask;');
-    RegisterMethod('constructor create');
-    RegisterMethod('procedure Free');
+    RegisterMethod('constructor Create;');
+    RegisterMethod('procedure Free;');
     RegisterMethod('function SaveToFile(const FileName : string) :boolean;');
     RegisterMethod('procedure LoadFromFile(const FileName : string);');
     RegisterMethod('procedure LoadFromTBitmap(bmp: TBitmap);');
@@ -104,15 +107,15 @@ procedure SIRegister_TMDTM(cl : TPSPascalCompiler);
 begin
   with cl.AddClassN(cl.FindClass('TObject'),'TMDTM') do
   begin
-    RegisterMethod('constructor create;');
-    RegisterMethod('procedure free;');
+    RegisterMethod('constructor Create;');
+    RegisterMethod('procedure Free;');
     RegisterProperty('Name','String',iptrw);
     RegisterMethod('function ToString : string');
     RegisterMethod('function LoadFromString(const s : string) : boolean;');
     RegisterMethod('procedure Normalize;');
     RegisterMethod('function Valid: boolean');
     RegisterMethod('procedure DeletePoint(Point: integer);');
-    RegisterMethod('procedure SwapPoint(p1, p2: integer);');
+    RegisterMethod('procedure SwapPoint(P1, P2: integer);');
     RegisterMethod('procedure MovePoint(fromIndex,toIndex : integer);');
     RegisterMethod('function AddPoint(Point : TMDTMPoint): integer;');
     RegisterProperty('Count','Integer',iptrw);
@@ -273,7 +276,7 @@ begin
   with CL.AddClassN(CL.FindClass('TWindow_Abstract'),'TWindow') do
   begin
     {$ifdef mswindows}
-    RegisterMethod('Constructor Create( target : Hwnd)');
+    RegisterMethod('Constructor Create(target : Hwnd)');
     {$endif}
     RegisterMethod('Function GetNativeWindow : TNativeWindow');
   end;
@@ -335,6 +338,22 @@ begin
   end;
 end;
 
+procedure SIRegister_TMMLTimer(CL: TPSPascalCompiler);
+begin
+CL.AddTypeS('TThreadPriority', '(tpIdle, tpLowest, tpLower, tpNormal, tpHigher, tpHighest, tpTimeCritical)');
+  with CL.AddClassN(CL.FindClass('TObject'),'TMMLTimer') do
+  begin
+    RegisterProperty('Enabled', 'Boolean', iptrw);
+    RegisterProperty('Interval', 'Integer', iptrw);
+    RegisterProperty('OnTimer', 'TNotifyEvent', iptrw);
+    RegisterProperty('ThreadPriority', 'TThreadPriority', iptrw);
+    RegisterMethod('constructor Create');
+    RegisterMethod('destructor Destroy');
+    RegisterMethod('Procedure On');
+    RegisterMethod('Procedure Off');
+  end;
+end;
+
 procedure SIRegister_IOManager(CL: TPSPascalCompiler);
 begin
   SIRegister_TTarget(CL);
@@ -374,6 +393,7 @@ begin
   SIRegister_TMBitmaps(cl);
   SIRegister_IOManager(cl);
   SIRegister_TClient(cl);
+  SIRegister_TMMLTimer(cl);
 end;
 
 end.

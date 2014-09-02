@@ -1,4 +1,4 @@
-﻿{
+{
 	This file is part of the Mufasa Macro Library (MML)
 	Copyright (c) 2009 by Raymond van Venetië and Merlijn Wajer
 
@@ -116,6 +116,9 @@ AddFunction(@DecRet, 'function DecRet(e: Extended): Extended;');
 AddFunction(@ps_MinA, 'function MinA(a: TIntegerArray): Integer;');
 AddFunction(@ps_MaxA, 'function MaxA(a: TIntegerArray): Integer;');
 AddFunction(@ps_Sum64IntArr, 'function Sum64IntArr(const Arr: TIntegerArray): Int64;');
+AddFunction(@ps_FixRad, 'function FixRad(rad: Extended): Extended;');
+AddFunction(@ps_MiddleBox,'function MiddleBox(b : TBox) : TPoint;');
+AddFunction(@ps_InAbstractBox, 'function InAbstractBox(x1, y1, x2, y2, x3, y3, x4, y4: Integer; x, y: Integer): Boolean;');
 
 {$IFNDEF MML_EXPORT_THREADSAFE}
 {window}
@@ -141,6 +144,7 @@ AddFunction(@ps_FreeTarget,'procedure FreeTarget(idx: integer);');
 AddFunction(@ps_SetDesktopAsClient,'procedure SetDesktopAsClient;');
 AddFunction(@ps_ActivateClient, 'procedure ActivateClient;');
 AddFunction(@ps_IsTargetValid, 'function IsTargetValid: boolean;');
+AddFunction(@ps_GetNativeWindow, 'function GetNativeWindow: integer;');
 {$ENDIF}
 
 {files}
@@ -170,6 +174,7 @@ AddFunction(@ps_WriteINI,'procedure WriteINI(const Section, KeyName, NewString, 
 AddFunction(@ps_ReadINI,'function ReadINI(const Section, KeyName, FileName: string): string;');
 AddFunction(@ps_DeleteINI,'procedure DeleteINI(const Section, KeyName, FileName: string);');
 AddFunction(@ps_ExtractFileExt,'function ExtractFileExt(const FileName: string): string;');
+AddFunction(@ps_DeleteDirectory, 'function DeleteDirectory(const Dir: String; const Empty: Boolean): Boolean;');
 
 {other}
 SetCurrSection('Other');
@@ -180,6 +185,8 @@ AddFunction(@ps_GetTClient,'function GetTClient : TClient;');
 AddFunction(@ps_SetSupressExceptions, 'procedure SetSupressExceptions(Supress : boolean);');
 AddFunction(@ps_SaveScreenshot,'procedure SaveScreenshot(FileName: string);');
 AddFunction(@ps_TerminateScript,'procedure TerminateScript;');
+AddFunction(@ps_AddOnTerminate,'function AddOnTerminate(const proc : string) : Boolean;');
+AddFunction(@ps_DeleteOnTerminate,'function DeleteOnTerminate(const proc : string) : Boolean;');
 {$ENDIF}
 AddFunction(@ps_now,'function Now: TDateTime;');
 AddFunction(@ps_date,'function Date : TDateTime;');
@@ -191,9 +198,10 @@ AddFunction(@ps_GetTimeRunning,'function GetTimeRunning: LongWord;');
 AddFunction(@ps_DecodeTime,'procedure DecodeTime(DateTime : TDateTime; var Hour,Min,Sec,MSec : word);');
 AddFunction(@ps_DecodeDate,'procedure DecodeDate ( const SourceDate  : TDateTime; var Year, Month, Day  : Word );');
 AddFunction(@ps_ConvertTime,'procedure ConvertTime(Time: integer; var h, m, s: integer);');
+AddFunction(@ps_ConvertTime64,'procedure ConvertTime64(time: int64; var y, m, w, d, h, min, s: integer);');
 AddFunction(@ps_HakunaMatata,'procedure HakunaMatata;');
 AddFunction(@ps_Simba,'procedure Simba;');
-AddFunction(@ps_PlaySound,'procedure PlaySound( Sound : string);');
+AddFunction(@ps_PlaySound,'procedure PlaySound(Sound : string);');
 AddFunction(@ps_StopSound,'procedure StopSound;');
 {$IFNDEF MML_EXPORT_THREADSAFE}
 AddFunction(@ps_DisplayDebugImgWindow,'procedure DisplayDebugImgWindow(w, h: integer);');
@@ -209,6 +217,7 @@ AddFunction(@ps_InputQuery,'function InputQuery(const ACaption, APrompt : String
 AddFunction(@ps_ShowMessage,'procedure ShowMessage(msg : string);');
 AddFunction(@ps_messageBox,'function MessageBox(Text, Caption: string; Flags: LongInt): Integer;');
 AddFunction(@ps_MessageDlg,'function MessageDlg(const Caption, Msg: string; DlgType: TMsgDlgType;  Buttons: TMsgDlgButtons) : integer;');
+AddFunction(@ps_ShowBalloonHint, 'procedure ShowBalloonHint(const Title, Hint: string; const Timeout: Integer; const Flag: TBalloonFlags);');
 AddFunction(@ps_SetClipBoard, 'procedure SetClipBoard(const Data: string);');
 AddFunction(@ps_GetClipBoard, 'function GetClipBoard: string;');
 AddFunction(@ps_GetProcesses, 'function GetProcesses: TSysProcArr;');
@@ -226,10 +235,12 @@ AddFunction(@ps_Base64Decode,'function Base64Decode(const str : string) : string
 AddFunction(@ps_Format,'function Format(const fmt : string;const args : array of const) : string;');
 AddFunction(@ps_LevDist, 'function LevDistance(src, target: string): Integer;');
 AddFunction(@ps_NormLevDist, 'function NormLevDistance(src, target: string): Extended;');
+AddFunction(@ps_StringMatch, 'function StringMatch(checkCompare, goalCompare: string): extended;');
 {$IFNDEF MML_EXPORT_THREADSAFE}
 AddFunction(nil,'function ToStr(x) : string;');
 {$ENDIF}
 AddFunction(@ps_Between,'function Between(s1, s2, str: string): string;');
+AddFunction(@ps_MultiBetween, 'function MultiBetween(str, s1, s2: string): TStringArray;');
 AddFunction(@ps_IntToStr, 'function IntToStr(value: Integer): String;');
 AddFunction(@ps_FloatToStr, 'function FloatToStr(value: Extended): String;');
 AddFunction(@ps_BoolToStr, 'function BoolToStr(value: Boolean): String;');
@@ -251,7 +262,9 @@ AddFunction(@ps_padR,'function Padr(s: String; i: longInt): String;');
 AddFunction(@ps_ExecRegExpr,'function ExecRegExpr( const RegExpr, InputStr : String) : boolean;');
 AddFunction(@ps_SplitRegExpr,'procedure SplitRegExpr( const RegExpr, InputStr : String; Pieces : TStringList);');
 AddFunction(@ps_ReplaceRegExpr,'function ReplaceRegExpr( const RegExpr, InputStr, ReplaceStr : String; UseSubstitution : boolean) : String;');
-AddFunction(@ps_posex, 'function PosEx(needle, haystack: String; offset: integer): integer;');
+AddFunction(@ps_PosEx, 'function PosEx(needle, haystack: String; offset: integer): integer;');
+AddFunction(@ps_IsArrInStr, 'function IsArrInStr(strArr: TStringArray; s: string): boolean;');
+AddFunction(@ps_PosMulti, 'function PosMulti(const SubStr: String; Text: string): TIntegerArray;');
 
 {crypto}
 SetCurrSection('Crypto');
@@ -369,7 +382,7 @@ AddFunction(@ps_GetMousePos, 'procedure GetMousePos(var x, y: integer);');
 AddFunction(@ps_HoldMouse, 'procedure HoldMouse(x, y: integer; clickType: integer);');
 AddFunction(@ps_ReleaseMouse, 'procedure ReleaseMouse(x, y: integer; clickType: integer);');
 AddFunction(@ps_ClickMouse, 'procedure ClickMouse(x, y: integer; clickType: integer);');
-AddFunction(@ps_IsMouseButtonDown,'function IsMouseButtonDown( button : integer) : boolean;');
+AddFunction(@ps_IsMouseButtonDown,'function IsMouseButtonDown(button : integer) : boolean;');
 {$ENDIF}
 
 {$IFNDEF MML_EXPORT_THREADSAFE}
@@ -388,7 +401,7 @@ AddFunction(@ps_GetKeyCode,'function GetKeyCode(c : char) : integer;');
 SetCurrSection('OCR');
 AddFunction(@ps_rs_GetUpText, 'function rs_GetUpText: string;');
 AddFunction(@ps_rs_GetUpTextAt, 'function rs_GetUpTextAt(x, y : integer): string;');
-AddFunction(@ps_rs_GetUpTextAtEx, 'function rs_GetUpTextAtEx(x, y: integer; shadow: boolean): string');
+AddFunction(@ps_rs_GetUpTextAtEx, 'function rs_GetUpTextAtEx(x, y: integer; shadow: boolean; fontname: string): string');
 AddFunction(@ps_SetUpTextFilter, 'procedure rs_SetUpTextFilter(filterdata: TOcrFilterDataArray);');
 AddFunction(@ps_ResetUpTextFilter, 'procedure rs_ResetUpTextFilter;');
 AddFunction(@ps_BitmapFromText, 'function BitmapFromText(const text, font: String): integer;');
@@ -402,6 +415,7 @@ AddFunction(@ps_gettextATPA,'function GetTextATPA(const ATPA : T2DPointArray; co
 AddFunction(@ps_LoadSystemFont,'function LoadSystemFont(const SysFont : TFont; const FontName : string) : boolean;');
 AddFunction(@ps_LoadFont, 'function LoadFont(const FontName: string; shadow: boolean): boolean;');
 AddFunction(@ps_FreeFont, 'function FreeFont(const FontName: string): boolean;');
+AddFunction(@ps_IsFontLoaded, 'function IsFontLoaded(const FontName: string): boolean;');
 AddFunction(@ps_FilterUpTextByCharacteristics, 'procedure ocr_FilterUpTextByCharacteristics(bmp: TMufasaBitmap);');
 {$ENDIF}
 
@@ -411,8 +425,8 @@ SetCurrSection('Bitmaps');
 AddFunction(@ps_CreateBitmapString,'function CreateBitmapString(bmp : integer) : string;');
 AddFunction(@ps_GetMufasaBitmap,'function GetMufasaBitmap(bmp : integer) : TMufasaBitmap;');
 AddFunction(@ps_CreateBitmap,'function CreateBitmap(w,h :integer) : integer;');
-AddFunction(@ps_FreeBitmap,'procedure FreeBitmap(Bmp : integer);');
-AddFunction(@ps_SaveBitmap,'procedure SaveBitmap(Bmp : integer; path : string);');
+AddFunction(@ps_FreeBitmap,'procedure FreeBitmap(Bmp: integer);');
+AddFunction(@ps_SaveBitmap,'procedure SaveBitmap(Bmp: integer; path : string);');
 AddFunction(@ps_BitmapExists, 'function BitmapExists(Index : integer) : boolean;');
 AddFunction(@ps_BitmapFromString,'function BitmapFromString(Width,Height : integer; Data : string): integer;');
 AddFunction(@ps_LoadBitmap,'function LoadBitmap(Path : string) : integer;');
@@ -421,6 +435,7 @@ AddFunction(@ps_GetBitmapSize,'procedure GetBitmapSize(Bmp : integer; var BmpW,B
 AddFunction(@ps_SetPersistentMemoryBitmap, 'procedure SetPersistentMemoryBitmap(bmp: integer; mem: PtrUInt; awidth, aheight: integer);');
 AddFunction(@ps_ResetPersistentMemoryBitmap, 'procedure ResetPersistentMemoryBitmap(bmp: Integer);');
 AddFunction(@ps_StretchBitmapResize,'procedure StretchBitmapResize(Bmp,NewW,NewH : integer);');
+AddFunction(@ps_ResizeBitmapEx,'procedure ResizeBitmapEx(const bmp: integer; const Method: TBmpResizeMethod; const NewWidth, NewHeight: integer);');
 AddFunction(@ps_CreateMirroredBitmap,'function CreateMirroredBitmap(Bmp : integer) : integer;');
 AddFunction(@ps_CreateMirroredBitmapEx,'function CreateMirroredBitmapEx(Bmp : integer; MirrorStyle : TBmpMirrorStyle) : integer;');
 AddFunction(@ps_FastSetPixel,'procedure FastSetPixel(bmp,x,y : integer; Color : TColor);');
@@ -428,6 +443,7 @@ AddFunction(@ps_FastSetPixels,'procedure FastSetPixels(bmp : integer; TPA : TPoi
 AddFunction(@ps_FastGetPixel,'function FastGetPixel(bmp, x,y : integer) : TColor;');
 AddFunction(@ps_FastGetPixels,'function FastGetPixels(Bmp : integer; TPA : TPointArray) : TIntegerArray;');
 AddFunction(@ps_GetBitmapAreaColors,'function GetBitmapAreaColors(bmp,xs, ys, xe, ye: Integer): T2DIntegerArray;');
+AddFunction(@ps_FindColorsBitmap, 'function FindColorsBitmap(bmp: integer; var points: TPointArray; const color: integer): boolean;');
 AddFunction(@ps_FastDrawClear,'procedure FastDrawClear(bmp : integer; Color : TColor);');
 AddFunction(@ps_FastDrawTransparent,'procedure FastDrawTransparent(x, y: Integer; SourceBitmap, TargetBitmap: Integer);');
 AddFunction(@ps_SetTransparentColor,'procedure SetTransparentColor(bmp : integer; Color : TColor);');
@@ -456,6 +472,7 @@ AddFunction(@ps_FindBitmapMaskTolerance,'function FindBitmapMaskTolerance(mask: 
 AddFunction(@ps_FindDeformedBitmapToleranceIn,'function FindDeformedBitmapToleranceIn(bitmap: integer; var x,y: Integer; xs, ys, xe, ye: Integer; tolerance: Integer; Range: Integer; AllowPartialAccuracy: Boolean; var accuracy: Extended): Boolean;');
 AddFunction(@ps_DrawTPABitmap,'procedure DrawTPABitmap(bitmap: integer; TPA: TPointArray; Color: integer);');
 AddFunction(@ps_DrawATPABitmap,'procedure DrawATPABitmap(bitmap: integer; ATPA: T2DPointArray);');
+AddFunction(@ps_LineToBitmap,'procedure DrawLineBitmap(bitmap: integer; Src,Dest: TPoint;Color: integer);');
 AddFunction(@ps_DrawATPABitmapEx,'procedure DrawATPABitmapEx(bitmap: integer; ATPA: T2DPointArray; Colors: TIntegerArray);');
 AddFunction(@ps_DrawBitmap,'procedure DrawBitmap(Bmp: Integer; Dest: TCanvas; x, y: Integer);');
 AddFunction(@ps_RectangleBitmap,'procedure RectangleBitmap(bitmap : integer; const box : TBox; Color : TColor);');
@@ -465,6 +482,11 @@ AddFunction(@ps_CalculatePixelShift,'function CalculatePixelShift(Bmp1,Bmp2 : In
 AddFunction(@ps_CalculatePixelShiftTPA,'function CalculatePixelShiftTPA(Bmp1,Bmp2 : Integer; CPoints: TPointArray) : integer;');
 AddFunction(@ps_CalculatePixelTolerance,'function CalculatePixelTolerance(Bmp1,Bmp2 : Integer; CompareBox : TBox; CTS : integer) : extended;');
 AddFunction(@ps_CalculatePixelToleranceTPA,'function CalculatePixelToleranceTPA(Bmp1,Bmp2 : Integer; CPoints: TPointArray; CTS : integer) : extended;');
+AddFunction(@ps_CropBitmap,'procedure CropBitmap(const bmp: integer; const xs, ys, xe, ye: integer);');
+AddFunction(@ps_GetColorsBitmap,'function GetColorsBitmap(const bmp: integer): TIntegerArray;');
+AddFunction(@ps_BitmapToMatrix,'function BitmapToMatrix(const bmp: integer): T2DIntegerArray;');
+AddFunction(@ps_DrawMatrixBitmap,'procedure DrawMatrixBitmap(const bmp: integer; const matrix: T2DIntegerArray);');
+AddFunction(@ps_ThresholdAdaptiveBitmap,'procedure ThresholdAdaptiveBitmap(const bmp: integer; Alpha, Beta: Byte; Invert: Boolean; Method: TBmpThreshMethod; C: Integer);');
 {$ENDIF}
 
 {tpa}
@@ -487,22 +509,31 @@ AddFunction(@ps_SortTPAFrom,'procedure SortTPAFrom(var a: TPointArray; const Fro
 AddFunction(@ps_SortATPAFrom,'procedure SortATPAFrom(var a: T2DPointArray; const From: TPoint);');
 AddFunction(@ps_SortATPAFromFirstPoint,'procedure SortATPAFromFirstPoint(var a: T2DPointArray; const From: TPoint);');
 AddFunction(@ps_SortATPAFromMidPoint,'procedure SortATPAFromMidPoint(var a: T2DPointArray; const From: TPoint);');
+AddFunction(@ps_SortATPAFromFirstPointX,'procedure SortATPAFromFirstPointX(var a: T2DPointArray; const From: TPoint);');
+AddFunction(@ps_SortATPAFromFirstPointY,'procedure SortATPAFromFirstPointY(var a: T2DPointArray; const From: TPoint);');
 AddFunction(@ps_InvertTPA,'procedure InvertTPA(var a: TPointArray);');
 AddFunction(@ps_InvertATPA,'procedure InvertATPA(var a: T2DPointArray);');
 AddFunction(@ps_MiddleTPAEx,'function MiddleTPAEx(const TPA: TPointArray; var x, y: Integer): Boolean;');
 AddFunction(@ps_MiddleTPA,'function MiddleTPA(const tpa: TPointArray): TPoint;');
+AddFunction(@ps_MedianTPAEx, 'procedure MedianTPAEx(var tpa: TPointArray; out x, y: integer);');
+AddFunction(@ps_MedianTPA, 'function MedianTPA(var tpa: TPointArray): TPoint;');
 AddFunction(@ps_SortATPASize,'procedure SortATPASize(var a: T2DPointArray; const BigFirst: Boolean);');
 AddFunction(@ps_SortATPAFromSize,'procedure SortATPAFromSize(var a: T2DPointArray; const Size: Integer; CloseFirst: Boolean);');
+AddFunction(@ps_FilterTPAsBetween, 'procedure FilterTPAsBetween(var atpa: T2DPointArray; const minLength, maxLength: integer);');
 AddFunction(@ps_InIntArrayEx,'function InIntArrayEx(const a: TIntegerArray; var Where: Integer; const Number: Integer): Boolean;');
 AddFunction(@ps_InIntArray,'function InIntArray(const a: TIntegerArray; Number: Integer): Boolean;');
 AddFunction(@ps_ClearSameIntegers,'procedure ClearSameIntegers(var a: TIntegerArray);');
 AddFunction(@ps_ClearSameIntegersAndTPA,'procedure ClearSameIntegersAndTPA(var a: TIntegerArray; var p: TPointArray);');
 AddFunction(@ps_SplitTPAEx,'function SplitTPAEx(const arr: TPointArray; w, h: Integer): T2DPointArray;');
 AddFunction(@ps_SplitTPA,'function SplitTPA(const arr: TPointArray; Dist: Integer): T2DPointArray;');
+AddFunction(@ps_ClusterTPAEx, 'function ClusterTPAEx(const TPA: TPointArray; width, height: Integer): T2DPointArray;');
+AddFunction(@ps_ClusterTPA, 'function ClusterTPA(const TPA: TPointArray; dist: Integer): T2DPointArray;');
 AddFunction(@ps_FloodFillTPA,'function FloodFillTPA(const TPA : TPointArray) : T2DPointArray;');
+AddFunction(@ps_FilterPointsPieEx,'procedure FilterPointsPieEx(var Points: TPointArray; const SD, ED, MinR, MaxR: Extended; Mx, My: Integer; Natural: Boolean);');
 AddFunction(@ps_FilterPointsPie,'procedure FilterPointsPie(var Points: TPointArray; const SD, ED, MinR, MaxR: Extended; Mx, My: Integer);');
 AddFunction(@ps_FilterPointsLine,'procedure FilterPointsLine(var Points: TPointArray; Radial: Extended; Radius, MX, MY: Integer);');
 AddFunction(@ps_filterpointsdist,'procedure FilterPointsDist(var Points: TPointArray; const MinDist, MaxDist: Extended; Mx, My: Integer);');
+AddFunction(@ps_FilterPointsBox, 'procedure FilterPointsBox(var points: TPointArray; x1, y1, x2, y2: integer);');
 AddFunction(@ps_filterTPADist, 'procedure FilterTPADist(var TPA: TPointArray; maxDist: integer);');
 AddFunction(@ps_GetATPABounds,'function GetATPABounds(const ATPA: T2DPointArray): TBox;');
 AddFunction(@ps_GetTPABounds,'function GetTPABounds(const TPA: TPointArray): TBox;');
@@ -524,9 +555,12 @@ AddFunction(@ps_TPAtoATPA,'function TPAtoATPA(const TPA: TPointArray; Dist: Inte
 AddFunction(@ps_CombineIntArray,'function CombineIntArray(const Ar1, Ar2: TIntegerArray): TIntegerArray;');
 AddFunction(@ps_MergeATPA,'function MergeATPA(const ATPA : T2DPointArray)  : TPointArray;');
 AddFunction(@ps_AppendTPA,'procedure AppendTPA(var TPA: TPointArray; const ToAppend: TPointArray);');
+AddFunction(@ps_TPAFromLine, 'function TPAFromLine(const x1, y1, x2, y2: Integer): TPointArray;');
+AddFunction(@ps_EdgeFromBox, 'function EdgeFromBox(const Box: TBox): TPointArray;');
 AddFunction(@ps_TPAFromBox,'function TPAFromBox(const Box : TBox) : TPointArray;');
 AddFunction(@ps_TPAFromEllipse,'function TPAFromEllipse(const CX, CY, XRadius, YRadius : Integer) : TPointArray;');
 AddFunction(@ps_TPAFromCircle,'function TPAFromCircle(const CX, CY, Radius : Integer) : TPointArray;');
+AddFunction(@ps_TPAFromPolygon, 'function TPAFromPolygon(const shape: TPointArray): TPointArray;');
 AddFunction(@ps_FillEllipse,'procedure FillEllipse(var a: TPointArray);');
 AddFunction(@ps_RotatePoints,'function RotatePoints(Const P: TPointArray; A, cx, cy: Extended): TPointArray ;');
 AddFunction(@ps_FindTPAEdges,'function FindTPAEdges(const p: TPointArray): TPointArray;');
@@ -553,6 +587,8 @@ AddFunction(@ps_MiddleTPAWrap,'procedure MiddleTPAWrap(const TPA: TPointArray; v
 AddFunction(@ps_CombineIntArrayWrap, 'procedure CombineIntArrayWrap(const Ar1, Ar2: TIntegerArray; var Res :  TIntegerArray);');
 AddFunction(@ps_ReturnPointsNotInTPAWrap,'procedure ReturnPointsNotInTPAWrap(Const TotalTPA: TPointArray; const Box: TBox; var Res :  TPointArray);');
 AddFunction(@ps_MergeATPAWrap,'procedure MergeATPAWrap(const ATPA : T2DPointArray; var Res: TPointArray);');
+AddFunction(@ps_TPAFromLineWrap, 'procedure TPAFromLineWrap(const x1, y1, x2, y2: Integer; var Res: TPointArray);');
+AddFunction(@ps_EdgeFromBoxWrap, 'procedure EdgeFromBoxWrap(const Box: TBox; var Res: TPointArray);');
 AddFunction(@ps_TPAFromBoxWrap,'procedure TPAFromBoxWrap(const Box : TBox; var Res : TPointArray);');
 AddFunction(@ps_TPAFromEllipseWrap,'procedure TPAFromEllipseWrap(const CX, CY, XRadius, YRadius : Integer; var Res : TPointArray);');
 AddFunction(@ps_TPAFromCircleWrap,'procedure TPAFromCircleWrap(const CX, CY, Radius : Integer; var Res : TPointArray);');
@@ -565,25 +601,29 @@ AddFunction(@ps_offsetTPA,'procedure OffsetTPA(var TPA : TPointArray; const Offs
 AddFunction(@ps_offsetATPA,'procedure OffsetATPA(var ATPA : T2DPointArray; const Offset : TPoint);');
 AddFunction(@ps_copyTPA,'function CopyTPA(const TPA : TPointArray) : TPointArray;');
 AddFunction(@ps_CopyATPA,'function CopyATPA(const ATPA : T2DPointArray) : T2DPointArray;');
+AddFunction(@ps_TPAPosNext,'function  TPAPosNext(const Find: TPoint; const V: TPointArray; const PrevPos: Integer;const IsSortedAscending: Boolean): Integer;');
+AddFunction(@ps_GlueTPAs, 'function GlueTPAs(const V1, V2: TPointArray; const IsSortedAscending,byDifference: Boolean):TPointArray;');
 
 {SQLite3}
-
+{$IFNDEF MML_EXPORT_THREADSAFE}
 {$IFDEF USE_SQLITE}
-SetCurrSection('SQLite3');
-AddFunction(@ps_sqlite_version, 'function sqlite_version() : string;');
-AddFunction(@ps_sqlite_version_num, 'function sqlite_version_num() : integer;');
-AddFunction(@ps_sqlite_escape, 'function sqlite_escape(s : string) : string;');
-AddFunction(@ps_sqlite_close, 'procedure sqlite_close(index : integer);');
-AddFunction(@ps_sqlite_open, 'function sqlite_open(filename : string) : integer;');
-AddFunction(@ps_sqlite_open_v2, 'function sqlite_open_v2(filename : string; flags : integer) : integer;');
-AddFunction(@ps_sqlite_errmsg, 'function sqlite_errMsg(index : integer) : string;');
-AddFunction(@ps_sqlite_errcode, 'function sqlite_errCode(index : integer) : integer;');
-AddFunction(@ps_sqlite_query, 'function sqlite_query(index : integer; sql : string) : boolean;');
-AddFunction(@ps_sqlite_queryvalue, 'function sqlite_queryValue(index : integer; sql : string; out Data : T2DStringArray) : boolean;');
-AddFunction(@ps_sqlite_queryresult, 'function sqlite_queryResult(index : integer; sql : string; var error : boolean) : T2DStringArray;');
+if (SQLite3Loaded) then
+begin
+  SetCurrSection('SQLite3');
+  AddFunction(@ps_sqlite_version, 'function sqlite_version() : string;');
+  AddFunction(@ps_sqlite_version_num, 'function sqlite_version_num() : integer;');
+  AddFunction(@ps_sqlite_escape, 'function sqlite_escape(s : string) : string;');
+  AddFunction(@ps_sqlite_close, 'procedure sqlite_close(index : integer);');
+  AddFunction(@ps_sqlite_open, 'function sqlite_open(filename : string) : integer;');
+  AddFunction(@ps_sqlite_open_v2, 'function sqlite_open_v2(filename : string; flags : integer) : integer;');
+  AddFunction(@ps_sqlite_errmsg, 'function sqlite_errMsg(index : integer) : string;');
+  AddFunction(@ps_sqlite_errcode, 'function sqlite_errCode(index : integer) : integer;');
+  AddFunction(@ps_sqlite_query, 'function sqlite_query(index : integer; sql : string) : boolean;');
+  AddFunction(@ps_sqlite_queryvalue, 'function sqlite_queryValue(index : integer; sql : string; out Data : T2DStringArray) : boolean;');
+  AddFunction(@ps_sqlite_queryresult, 'function sqlite_queryResult(index : integer; sql : string; var error : boolean) : T2DStringArray;');
+end;
 {$ENDIF}
 
-{$IFNDEF MML_EXPORT_THREADSAFE}
 SetCurrSection('Settings');
 AddFunction(@ps_KeyIsSetting, 'function KeyIsSetting(const KeyName: String): Boolean;');
 AddFunction(@ps_KeyIsDirectory, 'function KeyIsDirectory(const KeyName: String): Boolean;');

@@ -5,7 +5,7 @@ end;
 
 procedure Lape_rs_GetUpTextAtEx(const Params: PParamArray; const Result: Pointer); lape_extdecl
 begin
-  Pstring(Result)^ := ps_rs_GetUpTextAtEx(Pinteger(Params^[0])^, Pinteger(Params^[1])^, Pboolean(Params^[2])^);
+  Pstring(Result)^ := ps_rs_GetUpTextAtEx(Pinteger(Params^[0])^, Pinteger(Params^[1])^, Pboolean(Params^[2])^, PString(Params^[3])^);
 end;
 
 procedure Lape_rs_GetUpTextAt(const Params: PParamArray; const Result: Pointer); lape_extdecl
@@ -61,6 +61,11 @@ end;
 procedure Lape_FreeFont(const Params: PParamArray; const Result: Pointer); lape_extdecl
 begin
   Pboolean(Result)^ := ps_FreeFont(Pstring(Params^[0])^);
+end;
+
+procedure Lape_IsFontLoaded(const Params: PParamArray; const Result: Pointer); lape_extdecl
+begin
+  PBoolean(Result)^ := ps_IsFontLoaded(Pstring(Params^[0])^);
 end;
 
 procedure Lape_FilterUpTextByCharacteristics(const Params: PParamArray); lape_extdecl

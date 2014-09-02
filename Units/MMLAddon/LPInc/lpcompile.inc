@@ -86,8 +86,13 @@ addGlobalType('Integer', 'TColor');
 
 addGlobalType('(Numbers, Letters, Others)', 'StrExtr');
 addGlobalType('(MirrorWidth, MirrorHeight, MirrorLine)', 'TBmpMirrorStyle');
+addGlobalType('(TM_Mean, TM_MinMax)', 'TBmpThreshMethod');
+addGlobalType('(RM_Nearest, RM_Bilinear)', 'TBmpResizeMethod');
 addGlobalType('(mouse_Down, mouse_Up)', 'TMousePress');
 addGlobalType('(SP_WriteTimeStamp, SP_OnTerminate)', 'TSP_Property');
+addGlobalType('set of (mbYes, mbNo, mbOK, mbCancel, mbAbort, mbRetry, mbIgnore, mbAll, mbNoToAll, mbYesToAll, mbHelp, mbClose)', 'TMsgDlgButtons');
+addGlobalType('(mtWarning, mtError, mtInformation, mtConfirmation, mtCustom)', 'TMsgDlgType');
+addGlobalType('(bfNone, bfInfo, bfWarning, bfError)', 'TBalloonFlags');
 
 addGlobalType('array of string', 'TStringArray');
 addGlobalType('array of TStringArray', 'T2DStringArray');
@@ -95,7 +100,12 @@ addGlobalType('array of Integer', 'TIntegerArray');
 addGlobalType('array of TIntegerArray', 'T2DIntegerArray');
 addGlobalType('array of TIntegerArray', 'T2DIntArray');
 addGlobalType('array of T2DIntegerArray', 'T3DIntegerArray');
+addGlobalType('array of Cardinal', 'TCardinalArray');
+addGlobalType('array of TCardinalArray', 'T2DCardinalArray'); 
+addGlobalType('array of Char', 'TCharArray');
+addGlobalType('array of TCharArray', 'T2DCharArray');
 addGlobalType('array of byte', 'TByteArray');
+addGlobalType('array of TByteArray', 'T2DByteArray');
 addGlobalType('array of extended', 'TExtendedArray');
 addGlobalType('array of TExtendedArray', 'T2DExtendedArray');
 addGlobalType('array of T2DExtendedArray', 'T3DExtendedArray');
@@ -116,20 +126,12 @@ addGlobalType('record R, T: extended; end', 'PPoint');
 
 addGlobalType('record int1,int2,int3,int4,int5,int6,int7,int8,int9,int10,int11,int12,int13,int14,int15,int16: integer; end', 'TTarget_Exported');
 
-addGlobalType('record x, y, Color, Tolerance, AreaSize, AreaShape: integer; end', 'TSDTMPointDef');
-addGlobalType('array of TSDTMPointDef', 'TSDTMPointDefArray');
-addGlobalType('record MainPoint: TSDTMPointDef; SubPoints: TSDTMPointDefarray; end', 'TSDTM');
-
-addGlobalType('record x, y, c, t, asz: integer; bp: boolean; end', 'TMDTMPoint');
-addGlobalType('array of TMDTMPoint', 'TMDTMPointArray');
-
 addGlobalType('record Title: string; Handle: integer; Pid: integer; Width, Height: integer; end', 'TSysProc');
 addGlobalType('array of TSysProc', 'TSysProcArr');
 
-addGlobalType('packed record _type, is_text_color: integer; r_low,r_high,g_low,g_high,b_low,b_high,set_col: integer; ref_color,tol,cts: integer; end;', 'TOCRFilterData');
+addGlobalType('packed record _type: integer; is_text_color: boolean; r_low,r_high,g_low,g_high,b_low,b_high,set_col: integer; ref_color,tol,cts: integer; end;', 'TOCRFilterData');
 
 addGlobalType('array of TOCRFilterData', 'TOCRFilterDataArray');
 
-{ This is a workaround to allow Lape to export TMufasaBitmaps.
-  Also see lpexportedmethods.inc }
-addGlobalType('Pointer', 'TMufasaBitmap');
+addGlobalType('(htHaval, htMD4, htMD5, htRIPEMD128, htRIPEMD160, htSHA1, htSHA256, htSHA384, htSHA512, htTiger)', 'THashType');
+
